@@ -27,16 +27,23 @@ public:
     explicit StatusBar(QWidget* parent = nullptr);
 
     // Positions this overlay on top of target (same x/y/width, 40 px high).
-    // Must be called after target is shown. Never grabs input:
+    // Follows target moves/resizes (needed in windowed dev mode where the
+    // WM places the window after show()). Never grabs input:
     // WA_TransparentForMouseEvents lets touch events reach AA video below.
-    void attachTo(const QWidget* target);
+    void attachTo(QWidget* target);
+
+protected:
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
 private slots:
     void updateClock();
 
 private:
+    void syncGeometry();
+
     static constexpr int height_ = 40;
 
+    QWidget* target_ = nullptr;
     QLabel* labelClock_;
     QLabel* labelTemp_;
     QLabel* labelSignal_;
