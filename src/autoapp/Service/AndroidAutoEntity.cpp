@@ -16,6 +16,7 @@
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <chrono>
 #include <f1x/aasdk/Channel/Control/ControlServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/AndroidAutoEntity.hpp>
 #include <f1x/openauto/Common/Log.hpp>
@@ -272,6 +273,8 @@ void AndroidAutoEntity::sendPing()
     promise->then([]() {}, std::bind(&AndroidAutoEntity::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
     aasdk::proto::messages::PingRequest request;
+    const auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+    request.set_timestamp(timestamp.count());
     controlServiceChannel_->sendPingRequest(request, std::move(promise));
 }
 
