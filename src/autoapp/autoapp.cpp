@@ -31,6 +31,7 @@
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
 #include <f1x/openauto/autoapp/UI/MainWindow.hpp>
+#include <f1x/openauto/autoapp/UI/StatusBar.hpp>
 #include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
 #include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
 #include <f1x/openauto/Common/Log.hpp>
@@ -126,6 +127,11 @@ int main(int argc, char* argv[])
     {
         mainWindow.showFullScreen();
     }
+
+    // UI-1 overlay: clock + placeholders above everything (incl. AA video).
+    // Click-transparent, so the touch path underneath is untouched.
+    autoapp::ui::StatusBar statusBar;
+    statusBar.attachTo(&mainWindow);
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
