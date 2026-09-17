@@ -1,0 +1,195 @@
+/* ==========================================================================
+ * OpenAuto head-unit theme (UI-1) — loaded at startup from
+ * <repo>/assets/theme.qss (NOT compiled in). Edit & restart to preview.
+ *
+ * Palette (Nothing-style):
+ *   @background  #0D0D0F   main windows, idle screen
+ *   @panel       #17171B   dialogs, group boxes, inputs
+ *   @border      #2A2A30   frames, separators
+ *   @text        #F5F5F5   primary text
+ *   @text-dim    #9E9E9E   secondary text, placeholders
+ *   @accent      #D71920   Nothing red: buttons, focus, links, clock
+ *   @accent-hi   #F02830   accent hover/pressed
+ *   @on-accent   #FFFFFF   text on accent
+ *   @overlay-bg  rgba(13, 13, 15, 180)  status bar over video
+ * ========================================================================== */
+
+QMainWindow, QDialog, QWidget {
+    background-color: #0D0D0F;
+    color: #F5F5F5;
+    font-size: 14px;
+}
+
+QLabel {
+    background: transparent;
+    color: #F5F5F5;
+}
+
+QLabel:disabled {
+    color: #9E9E9E;
+}
+
+QPushButton {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+    border-radius: 6px;
+    color: #F5F5F5;
+    padding: 8px 16px;
+}
+
+QPushButton:hover {
+    border: 1px solid #D71920;
+}
+
+QPushButton:pressed {
+    background-color: #D71920;
+    color: #FFFFFF;
+    border: 1px solid #D71920;
+}
+
+QPushButton:focus {
+    border: 1px solid #D71920;
+    outline: none;
+}
+
+QPushButton:disabled {
+    color: #9E9E9E;
+    border: 1px solid #2A2A30;
+}
+
+QCheckBox, QRadioButton {
+    color: #F5F5F5;
+    spacing: 8px;
+}
+
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+}
+
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background-color: #D71920;
+    border: 1px solid #D71920;
+}
+
+QCheckBox::indicator:unchecked, QRadioButton::indicator:unchecked {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+}
+
+QGroupBox {
+    border: 1px solid #2A2A30;
+    border-radius: 6px;
+    margin-top: 12px;
+    color: #F5F5F5;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 8px;
+    padding: 0 4px;
+    color: #9E9E9E;
+}
+
+QLineEdit, QSpinBox {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+    border-radius: 4px;
+    color: #F5F5F5;
+    padding: 4px;
+    selection-background-color: #D71920;
+}
+
+QLineEdit:focus, QSpinBox:focus {
+    border: 1px solid #D71920;
+}
+
+QSlider::groove:horizontal {
+    background: #2A2A30;
+    height: 6px;
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background: #D71920;
+    width: 18px;
+    height: 18px;
+    margin: -6px 0;
+    border-radius: 9px;
+}
+
+QTabWidget::pane {
+    border: 1px solid #2A2A30;
+    background: #0D0D0F;
+}
+
+QTabBar::tab {
+    background: #17171B;
+    color: #9E9E9E;
+    padding: 8px 16px;
+    border: 1px solid #2A2A30;
+    border-bottom: none;
+}
+
+QTabBar::tab:selected {
+    background: #0D0D0F;
+    color: #F5F5F5;
+    border-top: 2px solid #D71920;
+}
+
+QListView, QListWidget {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+    color: #F5F5F5;
+    selection-background-color: #D71920;
+    selection-color: #FFFFFF;
+}
+
+QListView::item:selected, QListWidget::item:selected {
+    background-color: #D71920;
+    color: #FFFFFF;
+}
+
+QProgressBar {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+    border-radius: 4px;
+    color: #F5F5F5;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #D71920;
+    border-radius: 3px;
+}
+
+QScrollBar:vertical {
+    background: #0D0D0F;
+    width: 12px;
+}
+
+QScrollBar::handle:vertical {
+    background: #2A2A30;
+    border-radius: 6px;
+    min-height: 24px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #D71920;
+}
+
+/* ---- Status bar overlay (object names, see StatusBar.cpp) ---- */
+StatusBar {
+    background: rgba(13, 13, 15, 180);
+}
+
+#labelClock {
+    color: #F5F5F5;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+#labelTemp, #labelSignal {
+    color: #9E9E9E;
+    font-size: 16px;
+}

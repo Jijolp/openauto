@@ -18,6 +18,7 @@
 
 #include <thread>
 #include <QApplication>
+#include <QFile>
 #include <f1x/aasdk/USB/USBHub.hpp>
 #include <f1x/aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <f1x/aasdk/USB/AccessoryModeQueryChain.hpp>
@@ -85,6 +86,14 @@ int main(int argc, char* argv[])
     startIOServiceWorkers(ioService, threadPool);
 
     QApplication qApplication(argc, argv);
+
+    // UI-1 external theme (assets/theme.qss, NOT compiled in).
+    // Falls back to the palette defaults if the file is missing.
+    QFile themeFile(QCoreApplication::applicationDirPath() + QStringLiteral("/../assets/theme.qss"));
+    if(themeFile.open(QFile::ReadOnly))
+    {
+        qApplication.setStyleSheet(QString::fromUtf8(themeFile.readAll()));
+    }
     autoapp::ui::MainWindow mainWindow;
     // Head-unit target: frameless fullscreen. OPENAUTO_WINDOWED=1 keeps a
     // fixed 1024x600 window for development on PC.
