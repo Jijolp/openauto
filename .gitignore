@@ -3,4 +3,5 @@ lib/
 bin/
 build/
 CMakeLists.txt.user
-build.logtmp/
+build.log
+tmp/
