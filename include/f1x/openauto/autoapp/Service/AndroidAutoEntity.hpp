@@ -40,7 +40,7 @@ namespace service
 class AndroidAutoEntity: public IAndroidAutoEntity, public aasdk::channel::control::IControlServiceChannelEventHandler, public std::enable_shared_from_this<AndroidAutoEntity>
 {
 public:
-    AndroidAutoEntity(boost::asio::io_service& ioService,
+    AndroidAutoEntity(boost::asio::io_context& ioService,
                       aasdk::messenger::ICryptor::Pointer cryptor,
                       aasdk::transport::ITransport::Pointer transport,
                       aasdk::messenger::IMessenger::Pointer messenger,
@@ -67,7 +67,7 @@ private:
     void schedulePing();
     void sendPing();
 
-    boost::asio::io_service::strand strand_;
+    boost::asio::io_context::strand strand_;
     aasdk::messenger::ICryptor::Pointer cryptor_;
     aasdk::transport::ITransport::Pointer transport_;
     aasdk::messenger::IMessenger::Pointer messenger_;

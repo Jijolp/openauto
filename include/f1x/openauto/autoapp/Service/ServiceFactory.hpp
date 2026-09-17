@@ -33,7 +33,7 @@ namespace service
 class ServiceFactory: public IServiceFactory
 {
 public:
-    ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration);
+    ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration);
     ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) override;
 
 private:
@@ -42,7 +42,7 @@ private:
     IService::Pointer createInputService(aasdk::messenger::IMessenger::Pointer messenger);
     void createAudioServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger);
 
-    boost::asio::io_service& ioService_;
+    boost::asio::io_context& ioService_;
     configuration::IConfiguration::Pointer configuration_;
 };
 

@@ -28,7 +28,7 @@ namespace autoapp
 namespace service
 {
 
-BluetoothService::BluetoothService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IBluetoothDevice::Pointer bluetoothDevice)
+BluetoothService::BluetoothService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IBluetoothDevice::Pointer bluetoothDevice)
     : strand_(ioService)
     , channel_(std::make_shared<aasdk::channel::bluetooth::BluetoothServiceChannel>(strand_, std::move(messenger)))
     , bluetoothDevice_(std::move(bluetoothDevice))
@@ -38,7 +38,7 @@ BluetoothService::BluetoothService(boost::asio::io_service& ioService, aasdk::me
 
 void BluetoothService::start()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[BluetoothService] start.";
         channel_->receive(this->shared_from_this());
     });
@@ -46,7 +46,7 @@ void BluetoothService::start()
 
 void BluetoothService::stop()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[BluetoothService] stop.";
         bluetoothDevice_->stop();
     });

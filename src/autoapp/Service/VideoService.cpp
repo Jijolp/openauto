@@ -28,7 +28,7 @@ namespace autoapp
 namespace service
 {
 
-VideoService::VideoService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IVideoOutput::Pointer videoOutput)
+VideoService::VideoService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IVideoOutput::Pointer videoOutput)
     : strand_(ioService)
     , channel_(std::make_shared<aasdk::channel::av::VideoServiceChannel>(strand_, std::move(messenger)))
     , videoOutput_(std::move(videoOutput))
@@ -39,7 +39,7 @@ VideoService::VideoService(boost::asio::io_service& ioService, aasdk::messenger:
 
 void VideoService::start()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[VideoService] start.";
         channel_->receive(this->shared_from_this());
     });
@@ -47,7 +47,7 @@ void VideoService::start()
 
 void VideoService::stop()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[VideoService] stop.";
         videoOutput_->stop();
     });

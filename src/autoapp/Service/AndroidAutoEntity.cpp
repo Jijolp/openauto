@@ -29,7 +29,7 @@ namespace autoapp
 namespace service
 {
 
-AndroidAutoEntity::AndroidAutoEntity(boost::asio::io_service& ioService,
+AndroidAutoEntity::AndroidAutoEntity(boost::asio::io_context& ioService,
                                      aasdk::messenger::ICryptor::Pointer cryptor,
                                      aasdk::transport::ITransport::Pointer transport,
                                      aasdk::messenger::IMessenger::Pointer messenger,
@@ -55,7 +55,7 @@ AndroidAutoEntity::~AndroidAutoEntity()
 
 void AndroidAutoEntity::start(IAndroidAutoEntityEventHandler& eventHandler)
 {
-    strand_.dispatch([this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), eventHandler = &eventHandler]() {
         OPENAUTO_LOG(info) << "[AndroidAutoEntity] start.";
 
         eventHandler_ = eventHandler;
@@ -71,7 +71,7 @@ void AndroidAutoEntity::start(IAndroidAutoEntityEventHandler& eventHandler)
 
 void AndroidAutoEntity::stop()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[AndroidAutoEntity] stop.";
 
         eventHandler_ = nullptr;

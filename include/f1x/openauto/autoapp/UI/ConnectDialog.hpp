@@ -24,7 +24,7 @@ class ConnectDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ConnectDialog(boost::asio::io_service& ioService,  aasdk::tcp::ITCPWrapper& tcpWrapper, openauto::autoapp::configuration::IRecentAddressesList& recentAddressesList, QWidget *parent = nullptr);
+    explicit ConnectDialog(boost::asio::io_context& ioService,  aasdk::tcp::ITCPWrapper& tcpWrapper, openauto::autoapp::configuration::IRecentAddressesList& recentAddressesList, QWidget *parent = nullptr);
     ~ConnectDialog() override;
 
 signals:
@@ -44,7 +44,7 @@ private:
     void setControlsEnabledStatus(bool status);
     void connectHandler(const boost::system::error_code& ec, const std::string& ipAddress, aasdk::tcp::ITCPEndpoint::SocketPointer socket);
 
-    boost::asio::io_service& ioService_;
+    boost::asio::io_context& ioService_;
     aasdk::tcp::ITCPWrapper& tcpWrapper_;
     openauto::autoapp::configuration::IRecentAddressesList& recentAddressesList_;
     Ui::ConnectDialog *ui_;

@@ -29,7 +29,7 @@ namespace autoapp
 namespace service
 {
 
-InputService::InputService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice)
+InputService::InputService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice)
     : strand_(ioService)
     , channel_(std::make_shared<aasdk::channel::input::InputServiceChannel>(strand_, std::move(messenger)))
     , inputDevice_(std::move(inputDevice))
@@ -39,7 +39,7 @@ InputService::InputService(boost::asio::io_service& ioService, aasdk::messenger:
 
 void InputService::start()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[InputService] start.";
         channel_->receive(this->shared_from_this());
     });
@@ -47,7 +47,7 @@ void InputService::start()
 
 void InputService::stop()
 {
-    strand_.dispatch([this, self = this->shared_from_this()]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[InputService] stop.";
         inputDevice_->stop();
     });
@@ -139,7 +139,7 @@ void InputService::onButtonEvent(const projection::ButtonEvent& event)
 {
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
-    strand_.dispatch([this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
         aasdk::proto::messages::InputEventIndication inputEventIndication;
         inputEventIndication.set_timestamp(timestamp.count());
 
@@ -168,7 +168,7 @@ void InputService::onTouchEvent(const projection::TouchEvent& event)
 {
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
-    strand_.dispatch([this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
+    boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
         aasdk::proto::messages::InputEventIndication inputEventIndication;
         inputEventIndication.set_timestamp(timestamp.count());
 

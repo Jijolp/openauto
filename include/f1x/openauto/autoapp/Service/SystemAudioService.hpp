@@ -33,7 +33,7 @@ namespace service
 class SystemAudioService: public AudioService
 {
 public:
-    SystemAudioService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IAudioOutput::Pointer audioOutput);
+    SystemAudioService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IAudioOutput::Pointer audioOutput);
 };
 
 }

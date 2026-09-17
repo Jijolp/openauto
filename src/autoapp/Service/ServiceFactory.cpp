@@ -51,7 +51,7 @@ namespace autoapp
 namespace service
 {
 
-ServiceFactory::ServiceFactory(boost::asio::io_service& ioService, configuration::IConfiguration::Pointer configuration)
+ServiceFactory::ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration)
     : ioService_(ioService)
     , configuration_(std::move(configuration))
 {

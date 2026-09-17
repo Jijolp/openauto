@@ -28,7 +28,7 @@ namespace autoapp
 namespace service
 {
 
-MediaAudioService::MediaAudioService(boost::asio::io_service& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IAudioOutput::Pointer audioOutput)
+MediaAudioService::MediaAudioService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IAudioOutput::Pointer audioOutput)
     : AudioService(ioService, std::make_shared<aasdk::channel::av::MediaAudioServiceChannel>(strand_, std::move(messenger)), std::move(audioOutput))
 {
 

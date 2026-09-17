@@ -36,7 +36,7 @@ namespace service
 class AndroidAutoEntityFactory: public IAndroidAutoEntityFactory
 {
 public:
-    AndroidAutoEntityFactory(boost::asio::io_service& ioService,
+    AndroidAutoEntityFactory(boost::asio::io_context& ioService,
                              configuration::IConfiguration::Pointer configuration,
                              IServiceFactory& serviceFactory);
 
@@ -46,7 +46,7 @@ public:
 private:
     IAndroidAutoEntity::Pointer create(aasdk::transport::ITransport::Pointer transport);
 
-    boost::asio::io_service& ioService_;
+    boost::asio::io_context& ioService_;
     configuration::IConfiguration::Pointer configuration_;
     IServiceFactory& serviceFactory_;
 };
