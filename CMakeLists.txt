@@ -59,6 +59,14 @@ if(RPI3_BUILD)
     set(ILCLIENT_LIBRARIES "/opt/vc/src/hello_pi/libs/ilclient/libilclient.a;/opt/vc/lib/libvcos.so;/opt/vc/lib/libvcilcs.a;/opt/vc/lib/libvchiq_arm.so")
 endif(RPI3_BUILD)
 
+# Bluetooth (Qt5Bluetooth + btservice + local pairing) is optional and OFF by
+# default: qt5-connectivity is not in the official Arch repos and BT is not
+# needed for wired Android Auto. Re-enable with -DOPENAUTO_ENABLE_BLUETOOTH=ON.
+option(OPENAUTO_ENABLE_BLUETOOTH "Build with Bluetooth support (requires Qt5Bluetooth)" OFF)
+if(OPENAUTO_ENABLE_BLUETOOTH)
+    add_definitions(-DUSE_BLUETOOTH)
+endif()
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5Multimedia_INCLUDE_DIRS}
                     ${Qt5MultimediaWidgets_INCLUDE_DIRS}
@@ -83,6 +91,12 @@ set(autoapp_sources_directory ${sources_directory}/autoapp)
 set(autoapp_include_directory ${include_directory}/f1x/openauto/autoapp)
 file(GLOB_RECURSE autoapp_source_files ${autoapp_sources_directory}/*.ui ${autoapp_sources_directory}/*.cpp ${autoapp_include_directory}/*.hpp ${common_include_directory}/*.hpp ${resources_directory}/*.qrc)
 
+if(NOT OPENAUTO_ENABLE_BLUETOOTH)
+    list(REMOVE_ITEM autoapp_source_files
+        ${autoapp_sources_directory}/Projection/LocalBluetoothDevice.cpp
+        ${autoapp_include_directory}/Projection/LocalBluetoothDevice.hpp)
+endif()
+
 add_executable(autoapp ${autoapp_source_files})
 
 target_link_libraries(autoapp
@@ -99,6 +113,7 @@ target_link_libraries(autoapp
                         ${AASDK_PROTO_LIBRARIES}
                         ${AASDK_LIBRARIES})
 
+if(OPENAUTO_ENABLE_BLUETOOTH)
 set(btservice_sources_directory ${sources_directory}/btservice)
 set(btservice_include_directory ${include_directory}/f1x/openauto/btservice)
 file(GLOB_RECURSE btservice_source_files ${btservice_sources_directory}/*.cpp ${btservice_include_directory}/*.hpp ${common_include_directory}/*.hpp)
@@ -111,3 +126,4 @@ target_link_libraries(btservice
                         ${Qt5MultimediaWidgets_LIBRARIES}
                         ${PROTOBUF_LIBRARIES}
                         ${AASDK_PROTO_LIBRARIES})
+endif()

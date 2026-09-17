@@ -36,7 +36,9 @@
 #include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/QtAudioInput.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
+#ifdef USE_BLUETOOTH
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
+#endif
 #include <f1x/openauto/autoapp/Projection/RemoteBluetoothDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/DummyBluetoothDevice.hpp>
 
@@ -87,7 +89,11 @@ IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMess
     switch(configuration_->getBluetoothAdapterType())
     {
     case configuration::BluetoothAdapterType::LOCAL:
+#ifdef USE_BLUETOOTH
         bluetoothDevice = projection::IBluetoothDevice::Pointer(new projection::LocalBluetoothDevice(), std::bind(&QObject::deleteLater, std::placeholders::_1));
+#else
+        bluetoothDevice = std::make_shared<projection::DummyBluetoothDevice>();
+#endif
         break;
 
     case configuration::BluetoothAdapterType::REMOTE:
