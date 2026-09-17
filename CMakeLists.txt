@@ -36,6 +36,17 @@ find_package(Protobuf REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 
+# aasdk has no install() rules, it is consumed directly from its source tree.
+# Export AASDK_PATH (e.g. $HOME/dev/aa-headunit/aasdk) before running cmake.
+if(DEFINED ENV{AASDK_PATH})
+    set(AASDK_INCLUDE_DIRS $ENV{AASDK_PATH}/include)
+    set(AASDK_PROTO_INCLUDE_DIRS $ENV{AASDK_PATH}/build)
+    set(AASDK_LIBRARIES $ENV{AASDK_PATH}/lib/libaasdk.so)
+    set(AASDK_PROTO_LIBRARIES $ENV{AASDK_PATH}/lib/libaasdk_proto.so)
+else()
+    message(FATAL_ERROR "AASDK_PATH env var is not set. Export AASDK_PATH pointing to the built aasdk tree (headers + lib/) before running cmake.")
+endif()
+
 if(WIN32)
     set(WINSOCK2_LIBRARIES "ws2_32")
 endif(WIN32)
