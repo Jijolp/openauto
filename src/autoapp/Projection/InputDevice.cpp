@@ -61,11 +61,6 @@ bool InputDevice::eventFilter(QObject* obj, QEvent* event)
 {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    if(event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease || event->type() == QEvent::MouseMove)
-    {
-        OPENAUTO_LOG(debug) << "[InputDevice][debug] mouse event: " << event->type() << " on " << obj->metaObject()->className();
-    }
-
     if(eventHandler_ != nullptr)
     {
         if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
@@ -214,7 +209,6 @@ bool InputDevice::handleTouchEvent(QEvent* event)
     {
         const uint32_t x = (static_cast<float>(mouse->pos().x()) / touchscreenGeometry_.width()) * displayGeometry_.width();
         const uint32_t y = (static_cast<float>(mouse->pos().y()) / touchscreenGeometry_.height()) * displayGeometry_.height();
-        OPENAUTO_LOG(debug) << "[InputDevice][debug] touch forwarded: " << x << "," << y;
         eventHandler_->onTouchEvent({type, x, y, 0});
     }
 
