@@ -17,6 +17,7 @@
 */
 
 #include <QApplication>
+#include <QShortcut>
 #include <f1x/openauto/autoapp/UI/MainWindow.hpp>
 #include "ui_mainwindow.h"
 
@@ -38,6 +39,13 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui_->pushButtonExit, &QPushButton::clicked, this, &MainWindow::exit);
     connect(ui_->pushButtonToggleCursor, &QPushButton::clicked, this, &MainWindow::toggleCursor);
     connect(ui_->pushButtonWirelessConnection, &QPushButton::clicked, this, &MainWindow::openConnectDialog);
+
+    // Dev shortcuts (same actions as the buttons, no menubar on the head unit).
+    // Scoped to this window, which is hidden under the AA video while projecting.
+    connect(new QShortcut(QKeySequence(Qt::Key_S), this), &QShortcut::activated, this, &MainWindow::openSettings);
+    connect(new QShortcut(QKeySequence(Qt::Key_E), this), &QShortcut::activated, this, &MainWindow::exit);
+    connect(new QShortcut(QKeySequence(Qt::Key_C), this), &QShortcut::activated, this, &MainWindow::toggleCursor);
+    connect(new QShortcut(QKeySequence(Qt::Key_W), this), &QShortcut::activated, this, &MainWindow::openConnectDialog);
 }
 
 MainWindow::~MainWindow()

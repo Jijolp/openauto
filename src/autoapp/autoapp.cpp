@@ -85,7 +85,17 @@ int main(int argc, char* argv[])
 
     QApplication qApplication(argc, argv);
     autoapp::ui::MainWindow mainWindow;
-    mainWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
+    // Head-unit target: frameless fullscreen. OPENAUTO_WINDOWED=1 keeps a
+    // fixed 1024x600 window for development on PC.
+    const bool windowed = qEnvironmentVariableIsSet("OPENAUTO_WINDOWED");
+    if(windowed)
+    {
+        mainWindow.resize(1024, 600);
+    }
+    else
+    {
+        mainWindow.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    }
 
     auto configuration = std::make_shared<autoapp::configuration::Configuration>();
     autoapp::ui::SettingsWindow settingsWindow(configuration);
@@ -108,7 +118,14 @@ int main(int argc, char* argv[])
         qApplication.setOverrideCursor(cursor);
     });
 
-    mainWindow.showFullScreen();
+    if(windowed)
+    {
+        mainWindow.show();
+    }
+    else
+    {
+        mainWindow.showFullScreen();
+    }
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
