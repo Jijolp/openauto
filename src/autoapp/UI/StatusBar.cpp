@@ -18,7 +18,11 @@ namespace ui
 {
 
 StatusBar::StatusBar(QWidget* parent)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool)
+    // Qt::Tool: no taskbar entry. X11BypassWindowManagerHint: stay above
+    // the fullscreen AA video window (a plain StayOnTop is stacked below
+    // fullscreen by the WM). Input stays untouched via
+    // WA_TransparentForMouseEvents (see below).
+    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool | Qt::X11BypassWindowManagerHint)
     , labelClock_(new QLabel(this))
     , labelTemp_(new QLabel(QStringLiteral("--°C"), this))
     , labelSignal_(new QLabel(QStringLiteral("NO SIG"), this))
