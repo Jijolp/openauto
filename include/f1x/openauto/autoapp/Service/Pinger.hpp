@@ -44,7 +44,7 @@ private:
     void onTimerExceeded(const boost::system::error_code& error);
 
     boost::asio::io_context::strand strand_;
-    boost::asio::deadline_timer timer_;
+    boost::asio::steady_timer timer_;
     time_t duration_;
     bool cancelled_;
     Promise::Pointer promise_;

@@ -16,6 +16,7 @@
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <chrono>
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
 
 namespace f1x
@@ -52,7 +53,7 @@ void Pinger::ping(Promise::Pointer promise)
             ++pingsCount_;
 
             promise_ = std::move(promise);
-            timer_.expires_from_now(boost::posix_time::milliseconds(duration_));
+            timer_.expires_after(std::chrono::milliseconds(duration_));
             timer_.async_wait(strand_.wrap(std::bind(&Pinger::onTimerExceeded, this->shared_from_this(), std::placeholders::_1)));
         }
     });
