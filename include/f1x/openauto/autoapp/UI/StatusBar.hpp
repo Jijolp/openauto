@@ -33,6 +33,12 @@ public:
     // video below.
     void attachTo();
 
+protected:
+    // WA_TranslucentBackground inhibits background painting (both palette
+    // and QSS background are ignored), so the translucent bar is painted
+    // manually. Children (labels) are still styled by theme.qss.
+    void paintEvent(QPaintEvent* event) override;
+
 private slots:
     void updateClock();
 

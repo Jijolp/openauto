@@ -6,6 +6,7 @@
 
 #include <QHBoxLayout>
 #include <QGuiApplication>
+#include <QPainter>
 #include <QScreen>
 #include <QTime>
 #include <f1x/openauto/autoapp/UI/StatusBar.hpp>
@@ -63,6 +64,12 @@ void StatusBar::attachTo()
     const QRect geometry = screen != nullptr ? screen->geometry() : QRect(0, 0, 1024, 600);
     this->setGeometry(geometry.x(), geometry.y(), geometry.width(), height_);
     this->show();
+}
+
+void StatusBar::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+    painter.fillRect(rect(), QColor(13, 13, 15, 180));
 }
 
 void StatusBar::updateClock()
