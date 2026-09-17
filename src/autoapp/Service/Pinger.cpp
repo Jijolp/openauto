@@ -17,6 +17,7 @@
 */
 
 #include <chrono>
+#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Service/Pinger.hpp>
 
 namespace f1x
@@ -53,6 +54,7 @@ void Pinger::ping(Promise::Pointer promise)
             ++pingsCount_;
 
             promise_ = std::move(promise);
+            OPENAUTO_LOG(info) << "[Pinger][debug] ping #" << pingsCount_ << " armed (" << duration_ << "ms).";
             timer_.expires_after(std::chrono::milliseconds(duration_));
             timer_.async_wait(strand_.wrap(std::bind(&Pinger::onTimerExceeded, this->shared_from_this(), std::placeholders::_1)));
         }
@@ -63,11 +65,13 @@ void Pinger::pong()
 {
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         ++pongsCount_;
+        OPENAUTO_LOG(info) << "[Pinger][debug] pong received, pongs: " << pongsCount_ << ", pings: " << pingsCount_;
     });
 }
 
 void Pinger::onTimerExceeded(const boost::system::error_code& error)
 {
+    OPENAUTO_LOG(info) << "[Pinger][debug] timer expired, ec: " << error.message() << ", pings: " << pingsCount_ << ", pongs: " << pongsCount_ << ", cancelled: " << cancelled_;
     if(promise_ == nullptr)
     {
         return;

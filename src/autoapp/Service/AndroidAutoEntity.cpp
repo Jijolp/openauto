@@ -229,6 +229,7 @@ void AndroidAutoEntity::onNavigationFocusRequest(const aasdk::proto::messages::N
 
 void AndroidAutoEntity::onPingResponse(const aasdk::proto::messages::PingResponse&)
 {
+    OPENAUTO_LOG(info) << "[AndroidAutoEntity][debug] PING_RESPONSE received, calling pong().";
     pinger_->pong();
     controlServiceChannel_->receive(this->shared_from_this());
 }
@@ -268,6 +269,7 @@ void AndroidAutoEntity::schedulePing()
 
 void AndroidAutoEntity::sendPing()
 {
+    OPENAUTO_LOG(info) << "[AndroidAutoEntity][debug] sending PingRequest.";
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&AndroidAutoEntity::onChannelError, this->shared_from_this(), std::placeholders::_1));
 
