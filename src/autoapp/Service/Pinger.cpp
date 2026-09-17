@@ -76,12 +76,7 @@ void Pinger::onTimerExceeded(const boost::system::error_code& error)
     {
         promise_->reject(aasdk::error::Error(aasdk::error::ErrorCode::OPERATION_ABORTED));
     }
-    // Modern phones do not answer every PingRequest (observed: zero
-    // PING_RESPONSE in 10 s on a healthy session). Tolerate up to 4
-    // unanswered pings (~20 s) before killing the session, as done by
-    // the maintained CrankshaftNG fork ("Allow higher ping/pong diff").
-    // The watchdog stays active: a fully silent phone still quits.
-    else if(pingsCount_ - pongsCount_ > 4)
+    else if(pingsCount_ - pongsCount_ > 1)
     {
         promise_->reject(aasdk::error::Error());
     }
