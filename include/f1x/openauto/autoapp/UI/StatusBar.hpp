@@ -26,24 +26,18 @@ public:
     // Width is set by attachTo() from the main window geometry.
     explicit StatusBar(QWidget* parent = nullptr);
 
-    // Positions this overlay on top of target (same x/y/width, 40 px high).
-    // Follows target moves/resizes (needed in windowed dev mode where the
-    // WM places the window after show()). Never grabs input:
-    // WA_TransparentForMouseEvents lets touch events reach AA video below.
-    void attachTo(QWidget* target);
-
-protected:
-    bool eventFilter(QObject* obj, QEvent* event) override;
+    // Positions this overlay on top of the screen (same x/y/width as the
+    // primary screen, 40 px high) so it stays above the fullscreen AA
+    // video window, which is a separate top-level window. Never grabs
+    // input: WA_TransparentForMouseEvents lets touch events reach the
+    // video below.
+    void attachTo();
 
 private slots:
     void updateClock();
 
 private:
-    void syncGeometry();
-
     static constexpr int height_ = 40;
-
-    QWidget* target_ = nullptr;
     QLabel* labelClock_;
     QLabel* labelTemp_;
     QLabel* labelSignal_;

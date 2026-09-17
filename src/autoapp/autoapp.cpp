@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
     // UI-1 overlay: clock + placeholders above everything (incl. AA video).
     // Click-transparent, so the touch path underneath is untouched.
     autoapp::ui::StatusBar statusBar;
-    statusBar.attachTo(&mainWindow);
+    statusBar.attachTo();
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);

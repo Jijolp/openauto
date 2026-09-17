@@ -5,7 +5,8 @@
 */
 
 #include <QHBoxLayout>
-#include <QEvent>
+#include <QGuiApplication>
+#include <QScreen>
 #include <QTime>
 #include <f1x/openauto/autoapp/UI/StatusBar.hpp>
 
@@ -56,27 +57,12 @@ StatusBar::StatusBar(QWidget* parent)
     this->updateClock();
 }
 
-void StatusBar::attachTo(QWidget* target)
+void StatusBar::attachTo()
 {
-    target_ = target;
-    target->installEventFilter(this);
-    this->syncGeometry();
+    QScreen* screen = QGuiApplication::primaryScreen();
+    const QRect geometry = screen != nullptr ? screen->geometry() : QRect(0, 0, 1024, 600);
+    this->setGeometry(geometry.x(), geometry.y(), geometry.width(), height_);
     this->show();
-}
-
-bool StatusBar::eventFilter(QObject* obj, QEvent* event)
-{
-    if(obj == target_ && (event->type() == QEvent::Move || event->type() == QEvent::Resize))
-    {
-        this->syncGeometry();
-    }
-    return QWidget::eventFilter(obj, event);
-}
-
-void StatusBar::syncGeometry()
-{
-    const QPoint topLeft = target_->mapToGlobal(QPoint(0, 0));
-    this->setGeometry(topLeft.x(), topLeft.y(), target_->width(), height_);
 }
 
 void StatusBar::updateClock()
