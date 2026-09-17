@@ -33,6 +33,12 @@ find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_
 find_package(libusb-1.0 REQUIRED)
 find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth)
 find_package(Protobuf REQUIRED)
+# Legacy FindProtobuf module only yields -lprotobuf, but protobuf 36 needs
+# its Abseil closure at link time ("DSO missing from command line").
+# pkg-config exposes the full, correct link line: use it.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PROTOBUF_PC REQUIRED protobuf)
+set(PROTOBUF_LIBRARIES ${PROTOBUF_PC_LIBRARIES})
 find_package(OpenSSL REQUIRED)
 find_package(rtaudio REQUIRED)
 
