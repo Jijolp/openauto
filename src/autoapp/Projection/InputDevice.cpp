@@ -222,7 +222,9 @@ bool InputDevice::hasTouchscreen() const
 
 QRect InputDevice::getTouchscreenGeometry() const
 {
-    return touchscreenGeometry_;
+    // Declared to the phone as the touch surface: the video stream
+    // geometry, matching the coordinates sent in onTouchEvent.
+    return displayGeometry_;
 }
 
 IInputDevice::ButtonCodes InputDevice::getSupportedButtonCodes() const

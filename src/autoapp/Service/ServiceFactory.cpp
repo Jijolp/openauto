@@ -126,6 +126,10 @@ IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenge
         break;
     }
 
+    // The touchscreen covers the video stream, but mouse coordinates
+    // arrive in system-screen units: keep the real screen geometry as
+    // the mapping divider (see InputDevice) and declare the video
+    // geometry to the phone (see getTouchscreenGeometry).
     QScreen* screen = QGuiApplication::primaryScreen();
     QRect screenGeometry = screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();
     projection::IInputDevice::Pointer inputDevice(std::make_shared<projection::InputDevice>(*QApplication::instance(), configuration_, std::move(screenGeometry), std::move(videoGeometry)));
