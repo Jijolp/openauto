@@ -73,6 +73,14 @@ if(OPENAUTO_ENABLE_BLUETOOTH)
     add_definitions(-DUSE_BLUETOOTH)
 endif()
 
+# CAN bridge (socketcan -> AA buttons via InputService, events log-only).
+# OFF by default: needs a can interface (vcan0 on PC, can0 in-car) and is
+# useless without a car. Re-enable with -DOPENAUTO_ENABLE_CAN=ON.
+option(OPENAUTO_ENABLE_CAN "Build with CAN bridge support (socketcan)" OFF)
+if(OPENAUTO_ENABLE_CAN)
+    add_definitions(-DUSE_CAN)
+endif()
+
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5Multimedia_INCLUDE_DIRS}
                     ${Qt5MultimediaWidgets_INCLUDE_DIRS}
@@ -101,6 +109,12 @@ if(NOT OPENAUTO_ENABLE_BLUETOOTH)
     list(REMOVE_ITEM autoapp_source_files
         ${autoapp_sources_directory}/Projection/LocalBluetoothDevice.cpp
         ${autoapp_include_directory}/Projection/LocalBluetoothDevice.hpp)
+endif()
+
+if(NOT OPENAUTO_ENABLE_CAN)
+    list(REMOVE_ITEM autoapp_source_files
+        ${autoapp_sources_directory}/Projection/CanBridge.cpp
+        ${autoapp_include_directory}/Projection/CanBridge.hpp)
 endif()
 
 add_executable(autoapp ${autoapp_source_files})
