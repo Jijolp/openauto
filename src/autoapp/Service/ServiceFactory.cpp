@@ -18,6 +18,7 @@
 
 #include <QApplication>
 #include <QScreen>
+#include <algorithm>
 #include <f1x/aasdk/Channel/AV/MediaAudioServiceChannel.hpp>
 #include <f1x/aasdk/Channel/AV/SystemAudioServiceChannel.hpp>
 #include <f1x/aasdk/Channel/AV/SpeechAudioServiceChannel.hpp>
@@ -36,6 +37,10 @@
 #include <f1x/openauto/autoapp/Projection/QtAudioOutput.hpp>
 #include <f1x/openauto/autoapp/Projection/QtAudioInput.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
+#ifdef USE_CAN
+#include <f1x/openauto/Common/Log.hpp>
+#include <f1x/openauto/autoapp/Projection/CanBridge.hpp>
+#endif
 #ifdef USE_BLUETOOTH
 #include <f1x/openauto/autoapp/Projection/LocalBluetoothDevice.hpp>
 #endif
@@ -110,6 +115,25 @@ IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMess
 
 IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenger::Pointer messenger)
 {
+#ifdef USE_CAN
+    // Union the CAN-mapped buttons into the declared keycodes so the phone
+    // binds them: discovery advertises the union (see InputService::
+    // fillFeatures), the BindingRequest then covers the CAN buttons.
+    {
+        const auto canCodes = projection::CanBridge::requiredButtonCodes(
+            projection::CanBridge::mapPathFromEnv());
+        auto buttonCodes = configuration_->getButtonCodes();
+        for(const auto code : canCodes)
+        {
+            if(std::find(buttonCodes.begin(), buttonCodes.end(), code) == buttonCodes.end())
+            {
+                buttonCodes.push_back(code);
+            }
+        }
+        configuration_->setButtonCodes(buttonCodes);
+        OPENAUTO_LOG(info) << "[ServiceFactory] CAN bridge on, declared keycodes: " << buttonCodes.size();
+    }
+#endif
     QRect videoGeometry;
     switch(configuration_->getVideoResolution())
     {

@@ -34,13 +34,20 @@ InputService::InputService(boost::asio::io_context& ioService, aasdk::messenger:
     , channel_(std::make_shared<aasdk::channel::input::InputServiceChannel>(strand_, std::move(messenger)))
     , inputDevice_(std::move(inputDevice))
 {
-
+#ifdef USE_CAN
+    canBridge_ = std::make_shared<projection::CanBridge>(*this,
+                                                         projection::CanBridge::interfaceFromEnv(),
+                                                         projection::CanBridge::mapPathFromEnv());
+#endif
 }
 
 void InputService::start()
 {
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[InputService] start.";
+#ifdef USE_CAN
+        canBridge_->start();
+#endif
         channel_->receive(this->shared_from_this());
     });
 }
@@ -49,6 +56,9 @@ void InputService::stop()
 {
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[InputService] stop.";
+#ifdef USE_CAN
+        canBridge_->stop();
+#endif
         inputDevice_->stop();
     });
 }

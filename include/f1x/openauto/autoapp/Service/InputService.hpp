@@ -23,6 +23,9 @@
 #include <f1x/openauto/autoapp/Service/IService.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
+#ifdef USE_CAN
+#include <f1x/openauto/autoapp/Projection/CanBridge.hpp>
+#endif
 
 namespace f1x
 {
@@ -57,6 +60,9 @@ private:
     boost::asio::io_context::strand strand_;
     aasdk::channel::input::InputServiceChannel::Pointer channel_;
     projection::IInputDevice::Pointer inputDevice_;
+#ifdef USE_CAN
+    projection::CanBridge::Pointer canBridge_;
+#endif
 };
 
 }
