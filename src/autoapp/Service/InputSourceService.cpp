@@ -99,6 +99,12 @@ void InputSourceService::onChannelOpenRequest(const aasdk::proto::messages::Chan
     aasdk::proto::messages::ChannelOpenResponse response;
     response.set_status(status);
 
+    // S3 diagnostic: subscribe at OPEN, not only at key binding. Some phones
+    // (Nothing A063) open the channel without ever sending KeyBindingRequest;
+    // without this, touch reports would never reach the new channel and the
+    // C3 test could not exercise it. Revisit once S3 gives evidence.
+    inputDevice_->start(*this);
+
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(), std::placeholders::_1));
     channel_->sendChannelOpenResponse(response, std::move(promise));
@@ -173,6 +179,8 @@ void InputSourceService::onButtonEvent(const projection::ButtonEvent& event)
         return;
     }
 
+    OPENAUTO_LOG(info) << "[InputSourceService] button event, code: " << static_cast<int>(event.code)
+                       << ", type: " << static_cast<int>(event.type);
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
@@ -210,6 +218,8 @@ void InputSourceService::onTouchEvent(const projection::TouchEvent& event)
         return;
     }
 
+    OPENAUTO_LOG(info) << "[InputSourceService] touch event, action: " << event.type
+                       << ", x: " << event.x << ", y: " << event.y;
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
@@ -217,7 +227,6 @@ void InputSourceService::onTouchEvent(const projection::TouchEvent& event)
         inputReport.set_timestamp(timestamp.count());
 
         auto touchEvent = inputReport.mutable_touch_event();
-
         switch(event.type)
         {
         case aasdk::proto::enums::TouchAction::PRESS:
