@@ -19,6 +19,7 @@
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
 #include <f1x/openauto/autoapp/Projection/InputDevice.hpp>
+#include <f1x/openauto/autoapp/UI/HuEvents.hpp>
 
 namespace f1x
 {
@@ -92,6 +93,20 @@ bool InputDevice::eventFilter(QObject* obj, QEvent* event)
 
 bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
 {
+    // UI-2a single window: off the AA page every key belongs to the HU
+    // (clickable Home/Settings during a session) — never to the phone.
+    if(!ui::HuEvents::isAaPageActive())
+    {
+        return false;
+    }
+
+    // UI-2a navigation keys: always reach the MainWindow shortcuts, never
+    // the phone (retires the legacy keyboard scroll-wheel on 1/2).
+    if(key->key() == Qt::Key_1 || key->key() == Qt::Key_2 || key->key() == Qt::Key_3)
+    {
+        return false;
+    }
+
     auto eventType = event->type() == QEvent::KeyPress ? ButtonEventType::PRESS : ButtonEventType::RELEASE;
     aasdk::proto::enums::ButtonCode::Enum buttonCode;
     WheelDirection wheelDirection = WheelDirection::NONE;
@@ -162,18 +177,6 @@ bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
         buttonCode = aasdk::proto::enums::ButtonCode::MICROPHONE_1;
         break;
 
-    case Qt::Key_1:
-        wheelDirection = WheelDirection::LEFT;
-        eventType = ButtonEventType::NONE;
-        buttonCode = aasdk::proto::enums::ButtonCode::SCROLL_WHEEL;
-        break;
-
-    case Qt::Key_2:
-        wheelDirection = WheelDirection::RIGHT;
-        eventType = ButtonEventType::NONE;
-        buttonCode = aasdk::proto::enums::ButtonCode::SCROLL_WHEEL;
-        break;
-
     default:
         return true;
     }
@@ -195,6 +198,14 @@ bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
 
 bool InputDevice::handleTouchEvent(QEvent* event)
 {
+    // UI-2a single window: off the AA page every click belongs to the HU
+    // (keeps Home/Settings buttons clickable during a session and avoids
+    // injecting garbage touches for taps outside the video).
+    if(!ui::HuEvents::isAaPageActive())
+    {
+        return false;
+    }
+
     if(!configuration_->getTouchscreenEnabled())
     {
         return true;
@@ -220,8 +231,29 @@ bool InputDevice::handleTouchEvent(QEvent* event)
     QMouseEvent* mouse = static_cast<QMouseEvent*>(event);
     if(event->type() == QEvent::MouseButtonRelease || mouse->buttons().testFlag(Qt::LeftButton))
     {
-        const uint32_t x = (static_cast<float>(mouse->pos().x()) / touchscreenGeometry_.width()) * displayGeometry_.width();
-        const uint32_t y = (static_cast<float>(mouse->pos().y()) / touchscreenGeometry_.height()) * displayGeometry_.height();
+        // UI-2a: the video is an embedded widget now, so widget-local
+        // pos() is no longer screen coordinates. Map GLOBAL position
+        // into the host page rect, proportionally to the declared stream
+        // geometry (exact like the S3 fullscreen mapping). Taps outside
+        // the video (e.g. the status band) are left to the UI.
+        // No host (legacy separate window): keep the historic formula.
+        const QRect hostGeometry = ui::HuEvents::videoHostGeometry();
+        uint32_t x = 0, y = 0;
+        if(hostGeometry.isValid() && !hostGeometry.isEmpty())
+        {
+            const QPoint global = mouse->globalPos();
+            if(!hostGeometry.contains(global))
+            {
+                return false;
+            }
+            x = (static_cast<float>(global.x() - hostGeometry.x()) / hostGeometry.width()) * displayGeometry_.width();
+            y = (static_cast<float>(global.y() - hostGeometry.y()) / hostGeometry.height()) * displayGeometry_.height();
+        }
+        else
+        {
+            x = (static_cast<float>(mouse->pos().x()) / touchscreenGeometry_.width()) * displayGeometry_.width();
+            y = (static_cast<float>(mouse->pos().y()) / touchscreenGeometry_.height()) * displayGeometry_.height();
+        }
         for(auto* handler : eventHandlers_)
         {
             handler->onTouchEvent({type, x, y, 0});
