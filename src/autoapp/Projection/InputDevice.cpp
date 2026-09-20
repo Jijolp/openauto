@@ -93,6 +93,12 @@ bool InputDevice::eventFilter(QObject* obj, QEvent* event)
 
 bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
 {
+    // Full-window shields: splash and screen-off consume the first tap
+    // themselves; never forward to the phone while they are up.
+    if(ui::HuEvents::isSplashActive() || ui::HuEvents::isScreenOffActive())
+    {
+        return false;
+    }
     // UI-2a single window: off the AA page every key belongs to the HU
     // (clickable Home/Settings during a session) — never to the phone.
     if(!ui::HuEvents::isAaPageActive())
@@ -198,6 +204,12 @@ bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
 
 bool InputDevice::handleTouchEvent(QEvent* event)
 {
+    // Full-window shields: splash and screen-off are opaque overlays above
+    // everything; their first tap is consumed there (not forwarded).
+    if(ui::HuEvents::isSplashActive() || ui::HuEvents::isScreenOffActive())
+    {
+        return false;
+    }
     // UI-2a single window: off the AA page every click belongs to the HU
     // (keeps Home/Settings buttons clickable during a session and avoids
     // injecting garbage touches for taps outside the video).

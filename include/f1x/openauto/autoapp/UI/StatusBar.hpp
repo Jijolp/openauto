@@ -1,10 +1,9 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2a head-unit status band: clock + placeholders. Lives INSIDE the
-*  single MainWindow, fixed above the page stack on every page — no
-*  longer a top-level overlay (the overlay was invisible under the
-*  fullscreen video on Hyprland, and the video is now embedded anyway).
-*  Still click-transparent so taps fall through to the page below.)
+*  (UI-2b head-unit status band: clock + placeholders. Lives INSIDE the
+*  single MainWindow, fixed above the page stack on every page.
+*  UI-2b: shows real temp_ext when available, AA home button (48px) on
+*  the right that returns to home without forwarding to the video.)
 */
 
 #pragma once
@@ -12,6 +11,8 @@
 #include <QLabel>
 #include <QTimer>
 #include <QWidget>
+
+class QPushButton;
 
 namespace f1x
 {
@@ -22,20 +23,23 @@ namespace autoapp
 namespace ui
 {
 
+class MercedesLogo;
+
 class StatusBar : public QWidget
 {
     Q_OBJECT
 public:
-    // Embedded mode (parent != nullptr): plain child widget sized by the
-    // MainWindow layout. The legacy top-level overlay flags are only
-    // kept for the parentless fallback (unused by the app).
     explicit StatusBar(QWidget* parent = nullptr);
 
     void setNightMode(bool on);
+    void setTemp(int tempC);
+    void setTempPlaceholder();
+    void setAaMode(bool on);
+
+signals:
+    void aaHomeClicked();
 
 protected:
-    // Manual background paint (same as UI-1: translucent look also works
-    // embedded; children labels stay styled by theme.qss).
     void paintEvent(QPaintEvent* event) override;
 
 private slots:
@@ -45,8 +49,11 @@ private:
     QLabel* labelClock_;
     QLabel* labelTemp_;
     QLabel* labelSignal_;
+    QPushButton* aaButton_;
+    MercedesLogo* aaLogo_;
     QTimer* timer_;
     bool night_;
+    bool aaMode_;
 };
 
 }

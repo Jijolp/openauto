@@ -18,6 +18,7 @@
 class QLabel;
 class QPushButton;
 class QStackedWidget;
+class QGraphicsOpacityEffect;
 
 namespace f1x
 {
@@ -29,12 +30,12 @@ namespace ui
 {
 
 class StatusBar;
+class SplashOverlay;
+class ScreenOffOverlay;
+class MercedesLogo;
 
-// UI-2a single window: one frameless fullscreen window holding a fixed
-// status band above a QStackedWidget [Home | AA | Settings]. Navigation
-// is show/hide only — the AA session NEVER stops (the GStreamer pipeline
-// keeps decoding while its page is hidden; the video resumes on return).
-// Home/Settings are themed placeholders; the real design lands in UI-2b.
+// UI-2b: Nothing/Mercedes design — splash + home quadrants around
+// central logo + AA bandeau button + screen-off + auto-switch.
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -58,6 +59,16 @@ public slots:
 private slots:
     void onVideoStarted();
     void onVideoStopped();
+    void onTempExt(int tempC);
+    void onIgnition(bool on);
+    void onSplashFinished();
+    void onSplashShrinkStarted();
+    void onScreenOffWake();
+    void showScreenOff();
+    void hideScreenOff();
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 private:
     enum Page : int
@@ -71,13 +82,31 @@ private:
     QWidget* buildHomePage();
     QWidget* buildAAPage();
     QWidget* buildSettingsPage();
+    void animateQuadrantsIn();
+    void positionCenterLogo();
 
     StatusBar* statusBar_;
     QStackedWidget* stack_;
+    QWidget* homePage_;
     QWidget* aaPage_;
+    QWidget* settingsPage_;
     QLabel* aaPlaceholder_;
+    SplashOverlay* splash_;
+    ScreenOffOverlay* screenOff_;
+
+    // Home quadrants
+    QPushButton* quadrantAA_;
+    QPushButton* quadrantRace_;
+    QPushButton* quadrantCar_;
+    QPushButton* quadrantParams_;
+    QWidget* centerHit_;
+    MercedesLogo* centerLogo_;
+    std::vector<QGraphicsOpacityEffect*> quadrantEffects_;
+
+    // Misc
     QPushButton* nightButton_;
     bool night_;
+    bool splashActive_;
 };
 
 }

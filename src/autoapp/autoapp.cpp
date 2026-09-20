@@ -18,6 +18,9 @@
 
 #include <thread>
 #include <QApplication>
+#include <QCoreApplication>
+#include <QDir>
+#include <QFontDatabase>
 #include <f1x/aasdk/USB/USBHub.hpp>
 #include <f1x/aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <f1x/aasdk/USB/AccessoryModeQueryChain.hpp>
@@ -85,6 +88,33 @@ int main(int argc, char* argv[])
     startIOServiceWorkers(ioService, threadPool);
 
     QApplication qApplication(argc, argv);
+
+    // UI-2b: bundle Inter (assets/fonts/*.ttf) — fallback sans-serif if missing.
+    // No sudo install required; fonts travel with the binary.
+    {
+        const QString fontDir = QCoreApplication::applicationDirPath() + QStringLiteral("/../assets/fonts");
+        const QStringList fonts = {QStringLiteral("Inter-Regular.ttf"), QStringLiteral("Inter-Medium.ttf"),
+                                   QStringLiteral("Inter-SemiBold.ttf"), QStringLiteral("Inter-Bold.ttf")};
+        for(const auto& f : fonts)
+        {
+            const QString path = fontDir + QStringLiteral("/") + f;
+            if(QFile::exists(path))
+            {
+                const int id = QFontDatabase::addApplicationFont(path);
+                if(id < 0)
+                {
+                    OPENAUTO_LOG(warning) << "[OpenAuto] failed to load font " << path.toStdString();
+                }
+            }
+        }
+        QFont appFont(QStringLiteral("Inter"));
+        QFontDatabase db;
+        if(db.families().contains(QStringLiteral("Inter")))
+        {
+            appFont.setStyleHint(QFont::SansSerif);
+            qApplication.setFont(appFont);
+        }
+    }
 
     // UI-2a single window: status band + [Home|AA|Settings] stack inside
     // MainWindow (theme loaded there, incl. night variant). No separate
