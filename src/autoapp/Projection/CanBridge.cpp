@@ -31,6 +31,10 @@
 
 #include <f1x/openauto/Common/Log.hpp>
 #include <f1x/openauto/autoapp/Projection/CanBridge.hpp>
+// UI-2a: one-way night_mode notification (CanBridge emits, UI consumes;
+// no reverse coupling). This TU only builds with USE_CAN; HuEvents
+// itself is CAN-agnostic so OFF builds stay green.
+#include <f1x/openauto/autoapp/UI/HuEvents.hpp>
 
 namespace f1x
 {
@@ -484,8 +488,10 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
         {
             nightKnown_ = true;
             nightOn_ = on;
-            OPENAUTO_LOG(info) << "[CanBridge] night mode " << (on ? "ON" : "OFF")
-                               << " (stub, not forwarded).";
+            OPENAUTO_LOG(info) << "[CanBridge] night mode " << (on ? "ON" : "OFF");
+            // UI-2a: first real CAN consumer — the single window re-themes
+            // (read-only signal, no coupling back into this bridge).
+            ui::HuEvents::notifyNightMode(on);
         }
     }
 }

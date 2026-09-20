@@ -1,64 +1,64 @@
 /* ==========================================================================
- * OpenAuto head-unit theme (UI-1, extended UI-2a) — loaded at startup from
- * <repo>/assets/theme.qss (NOT compiled in). Edit & restart to preview.
+ * OpenAuto head-unit theme (UI-2a NIGHT variant — pure black, dimmed accent. Loaded when CAN night_mode is ON from
+ * <repo>/assets/theme-night.qss (NOT compiled in). Edit & restart to preview.
  *
  * Palette (Nothing-style):
- *   @background  #0D0D0F   main windows, idle screen
- *   @panel       #17171B   dialogs, group boxes, inputs
- *   @border      #2A2A30   frames, separators
- *   @text        #F5F5F5   primary text
- *   @text-dim    #9E9E9E   secondary text, placeholders
- *   @accent      #D71920   Nothing red: buttons, focus, links, clock
- *   @accent-hi   #F02830   accent hover/pressed
+ *   @background  #000000   main windows, idle screen
+ *   @panel       #050506   dialogs, group boxes, inputs
+ *   @border      #1C1C20   frames, separators
+ *   @text        #C9C9C9   primary text
+ *   @text-dim    #6E6E6E   secondary text, placeholders
+ *   @accent      #7A0F14   Nothing red: buttons, focus, links, clock
+ *   @accent-hi   #96131B   accent hover/pressed
  *   @on-accent   #FFFFFF   text on accent
- *   @overlay-bg  rgba(13, 13, 15, 180)  status bar over video
+ *   @overlay-bg  rgba(0, 0, 0, 220)  status bar over video
  * ========================================================================== */
 
 QMainWindow, QDialog, QWidget {
-    background-color: #0D0D0F;
-    color: #F5F5F5;
+    background-color: #000000;
+    color: #C9C9C9;
     font-size: 14px;
 }
 
 QLabel {
     background: transparent;
-    color: #F5F5F5;
+    color: #C9C9C9;
 }
 
 QLabel:disabled {
-    color: #9E9E9E;
+    color: #6E6E6E;
 }
 
 QPushButton {
-    background-color: #17171B;
-    border: 1px solid #2A2A30;
+    background-color: #050506;
+    border: 1px solid #1C1C20;
     border-radius: 6px;
-    color: #F5F5F5;
+    color: #C9C9C9;
     padding: 8px 16px;
 }
 
 QPushButton:hover {
-    border: 1px solid #D71920;
+    border: 1px solid #7A0F14;
 }
 
 QPushButton:pressed {
-    background-color: #D71920;
+    background-color: #7A0F14;
     color: #FFFFFF;
-    border: 1px solid #D71920;
+    border: 1px solid #7A0F14;
 }
 
 QPushButton:focus {
-    border: 1px solid #D71920;
+    border: 1px solid #7A0F14;
     outline: none;
 }
 
 QPushButton:disabled {
-    color: #9E9E9E;
-    border: 1px solid #2A2A30;
+    color: #6E6E6E;
+    border: 1px solid #1C1C20;
 }
 
 QCheckBox, QRadioButton {
-    color: #F5F5F5;
+    color: #C9C9C9;
     spacing: 8px;
 }
 
@@ -68,50 +68,50 @@ QCheckBox::indicator, QRadioButton::indicator {
 }
 
 QCheckBox::indicator:checked, QRadioButton::indicator:checked {
-    background-color: #D71920;
-    border: 1px solid #D71920;
+    background-color: #7A0F14;
+    border: 1px solid #7A0F14;
 }
 
 QCheckBox::indicator:unchecked, QRadioButton::indicator:unchecked {
-    background-color: #17171B;
-    border: 1px solid #2A2A30;
+    background-color: #050506;
+    border: 1px solid #1C1C20;
 }
 
 QGroupBox {
-    border: 1px solid #2A2A30;
+    border: 1px solid #1C1C20;
     border-radius: 6px;
     margin-top: 12px;
-    color: #F5F5F5;
+    color: #C9C9C9;
 }
 
 QGroupBox::title {
     subcontrol-origin: margin;
     left: 8px;
     padding: 0 4px;
-    color: #9E9E9E;
+    color: #6E6E6E;
 }
 
 QLineEdit, QSpinBox {
-    background-color: #17171B;
-    border: 1px solid #2A2A30;
+    background-color: #050506;
+    border: 1px solid #1C1C20;
     border-radius: 4px;
-    color: #F5F5F5;
+    color: #C9C9C9;
     padding: 4px;
-    selection-background-color: #D71920;
+    selection-background-color: #7A0F14;
 }
 
 QLineEdit:focus, QSpinBox:focus {
-    border: 1px solid #D71920;
+    border: 1px solid #7A0F14;
 }
 
 QSlider::groove:horizontal {
-    background: #2A2A30;
+    background: #1C1C20;
     height: 6px;
     border-radius: 3px;
 }
 
 QSlider::handle:horizontal {
-    background: #D71920;
+    background: #7A0F14;
     width: 18px;
     height: 18px;
     margin: -6px 0;
@@ -119,84 +119,84 @@ QSlider::handle:horizontal {
 }
 
 QTabWidget::pane {
-    border: 1px solid #2A2A30;
-    background: #0D0D0F;
+    border: 1px solid #1C1C20;
+    background: #000000;
 }
 
 QTabBar::tab {
-    background: #17171B;
-    color: #9E9E9E;
+    background: #050506;
+    color: #6E6E6E;
     padding: 8px 16px;
-    border: 1px solid #2A2A30;
+    border: 1px solid #1C1C20;
     border-bottom: none;
 }
 
 QTabBar::tab:selected {
-    background: #0D0D0F;
-    color: #F5F5F5;
-    border-top: 2px solid #D71920;
+    background: #000000;
+    color: #C9C9C9;
+    border-top: 2px solid #7A0F14;
 }
 
 QListView, QListWidget {
-    background-color: #17171B;
-    border: 1px solid #2A2A30;
-    color: #F5F5F5;
-    selection-background-color: #D71920;
+    background-color: #050506;
+    border: 1px solid #1C1C20;
+    color: #C9C9C9;
+    selection-background-color: #7A0F14;
     selection-color: #FFFFFF;
 }
 
 QListView::item:selected, QListWidget::item:selected {
-    background-color: #D71920;
+    background-color: #7A0F14;
     color: #FFFFFF;
 }
 
 QProgressBar {
-    background-color: #17171B;
-    border: 1px solid #2A2A30;
+    background-color: #050506;
+    border: 1px solid #1C1C20;
     border-radius: 4px;
-    color: #F5F5F5;
+    color: #C9C9C9;
     text-align: center;
 }
 
 QProgressBar::chunk {
-    background-color: #D71920;
+    background-color: #7A0F14;
     border-radius: 3px;
 }
 
 QScrollBar:vertical {
-    background: #0D0D0F;
+    background: #000000;
     width: 12px;
 }
 
 QScrollBar::handle:vertical {
-    background: #2A2A30;
+    background: #1C1C20;
     border-radius: 6px;
     min-height: 24px;
 }
 
 QScrollBar::handle:vertical:hover {
-    background: #D71920;
+    background: #7A0F14;
 }
 
 /* ---- Status bar overlay (object names, see StatusBar.cpp) ---- */
 StatusBar {
-    background: rgba(13, 13, 15, 180);
+    background: rgba(0, 0, 0, 220);
 }
 
 #labelClock {
-    color: #F5F5F5;
+    color: #C9C9C9;
     font-size: 22px;
     font-weight: bold;
 }
 
 #labelTemp, #labelSignal {
-    color: #9E9E9E;
+    color: #6E6E6E;
     font-size: 16px;
 }
 
 /* ---- UI-2a skeleton pages (object names, see MainWindow.cpp) ---- */
 #pageTitle {
-    color: #F5F5F5;
+    color: #C9C9C9;
     font-size: 28px;
     font-weight: bold;
 }
