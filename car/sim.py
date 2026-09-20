@@ -2,7 +2,7 @@
 """CanBridge simulator: replays plausible W203 traffic on a (virtual) CAN bus.
 
 Frames match car/can_map.json PLACEHOLDER ids (0x260 ignition, 0x261 speed,
-0x262 lights, 0x266/0x267 steering-wheel buttons).
+0x262 lights, 0x263 temp_ext, 0x266/0x267 steering-wheel buttons).
 
 Usage:
     sudo pacman -S python-can            # one-time dependency
@@ -26,6 +26,7 @@ except ImportError:
 IGNITION_ID = 0x260
 SPEED_ID = 0x261
 NIGHT_ID = 0x262
+TEMP_ID = 0x263
 BTN_A_ID = 0x266  # seek_next 0x08, seek_prev 0x04, toggle_play 0x02, voice 0x01
 BTN_B_ID = 0x267  # ok_enter 0x01, back 0x02, vol_up 0x04, vol_down 0x08
 
@@ -54,6 +55,7 @@ def send(bus, arb_id, byte0, label=""):
 def single_pass(bus):
     send(bus, IGNITION_ID, 0x01, "ignition ON")
     send(bus, NIGHT_ID, 0x04, "night ON")
+    send(bus, TEMP_ID, 60, "temp 20°C (60-40)")
     # GALA-style progressive speed: 0 -> 90 -> 0 km/h, 5 km/h steps.
     for speed in list(range(0, 95, 5)) + list(range(85, -1, -5)):
         send(bus, SPEED_ID, speed, f"speed {speed} km/h")

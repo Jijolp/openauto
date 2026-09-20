@@ -130,13 +130,16 @@ CanBridge::CanBridge(IInputDeviceEventHandler& eventHandler, std::string interfa
     , nightKnown_(false)
     , nightOn_(false)
     , lastSpeed_(-1.0)
+    , tempKnown_(false)
+    , lastTemp_(0)
 {
     OPENAUTO_LOG(info) << "[CanBridge] interface: " << interfaceName_
                        << ", map: " << mapPath_
                        << ", buttons: " << map_.buttons.size()
                        << ", ignition: " << (map_.ignition.present ? "yes" : "no")
                        << ", speed: " << (map_.speed.present ? "yes" : "no")
-                       << ", night: " << (map_.nightMode.present ? "yes" : "no");
+                       << ", night: " << (map_.nightMode.present ? "yes" : "no")
+                       << ", temp: " << (map_.tempExt.present ? "yes" : "no");
 }
 
 CanBridge::~CanBridge()
@@ -319,6 +322,20 @@ CanMap CanBridge::loadMap(const std::string& mapPath)
         }
     }
 
+    if(root.contains("temp_ext") && root.value("temp_ext").isObject())
+    {
+        const QJsonObject obj = root.value("temp_ext").toObject();
+        uint32_t canId = 0;
+        if(parseHex(obj.value("can_id"), canId))
+        {
+            map.tempExt.present = true;
+            map.tempExt.canId = canId;
+            map.tempExt.byteIndex = static_cast<uint8_t>(parseHexOr(obj, "byte", 0));
+            map.tempExt.factor = obj.value("factor").toDouble(1.0);
+            map.tempExt.offset = obj.value("offset").toDouble(0.0);
+        }
+    }
+
     return map;
 }
 
@@ -464,8 +481,8 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
             {
                 ignitionKnown_ = true;
                 ignitionOn_ = on;
-                OPENAUTO_LOG(info) << "[CanBridge] ignition " << (on ? "ON" : "OFF")
-                                   << " (stub, not forwarded).";
+                OPENAUTO_LOG(info) << "[CanBridge] ignition " << (on ? "ON" : "OFF");
+                ui::HuEvents::notifyIgnition(on);
             }
         }
     }
@@ -492,6 +509,18 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
             // UI-2a: first real CAN consumer — the single window re-themes
             // (read-only signal, no coupling back into this bridge).
             ui::HuEvents::notifyNightMode(on);
+        }
+    }
+
+    if(map_.tempExt.present && map_.tempExt.canId == canId && map_.tempExt.byteIndex < dlc)
+    {
+        const int temp = static_cast<int>(std::lround(data[map_.tempExt.byteIndex] * map_.tempExt.factor + map_.tempExt.offset));
+        if(!tempKnown_ || temp != lastTemp_)
+        {
+            tempKnown_ = true;
+            lastTemp_ = temp;
+            OPENAUTO_LOG(info) << "[CanBridge] temp_ext " << temp << "°C";
+            ui::HuEvents::notifyTempExt(temp);
         }
     }
 }

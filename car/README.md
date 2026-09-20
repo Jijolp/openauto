@@ -23,7 +23,8 @@ Relevant env vars (all optional):
   ],
   "ignition":   {"can_id": "0x260", "byte": 0, "mask": "0x01", "on": "0x01", "off": "0x00"},
   "speed":      {"can_id": "0x261", "byte": 0, "factor": 1.0},
-  "night_mode": {"can_id": "0x262", "byte": 0, "mask": "0x04", "on": "0x04"}
+  "night_mode": {"can_id": "0x262", "byte": 0, "mask": "0x04", "on": "0x04"},
+  "temp_ext":   {"can_id": "0x263", "byte": 0, "factor": 1.0, "offset": -40}
 }
 ```
 
@@ -33,11 +34,12 @@ Relevant env vars (all optional):
   `aa_button` must be a keycode from the table below, else the entry is
   skipped with a warning. All `can_id`/`mask`/`press`/`release` accept
   `"0x…"` strings or plain numbers.
-- `ignition` / `speed` / `night_mode` — optional objects; absent = disabled.
-  **Log-only stubs**: transitions print `[CanBridge] ignition ON … (stub,
-  not forwarded)` etc. Nothing consumes them on PC yet. `speed` = one byte
-  × `factor`, logged when it moves by ≥ 1 km/h (GALA placeholder).
-- Current IDs are **factices** (`0x260`–`0x267`, one shared byte with bit
+- `ignition` / `speed` / `night_mode` / `temp_ext` — optional objects; absent = disabled.
+  `ignition` OFF → screen-off overlay (OLED black, 1-line synergy); `night_mode`
+  → theme-night re-tint; `temp_ext` → bandeau `21°` (placeholder `--°` on PC,
+  formula `value* factor + offset`, e.g. `offset -40` for signed offset).
+  `speed` = one byte × `factor`, logged when it moves by ≥ 1 km/h (GALA placeholder).
+- Current IDs are **factices** (`0x260`–`0x267` plus `0x263` temp, one shared byte with bit
   masks). Shared-byte masks are safe thanks to edge detection.
 
 AA keycodes available in this aasdk proto snapshot (`ButtonCodeEnum.proto`):
@@ -78,9 +80,12 @@ cmake --build build -j$(nproc)
 # terminal 2: single frames (can-utils):
 cansend vcan0 266#08    # PRESS seek_next  -> [CanBridge] button seek_next (87) PRESS
 cansend vcan0 266#00    # RELEASE          -> [CanBridge] button seek_next (87) RELEASE
-cansend vcan0 260#01    # ignition ON stub
+cansend vcan0 260#01    # ignition ON → wake
+cansend vcan0 260#00    # ignition OFF → screen off (overlay noir)
 cansend vcan0 261#32    # speed 50 km/h stub (0x32 = 50)
-cansend vcan0 262#04    # night ON stub
+cansend vcan0 262#04    # night ON → theme-night
+cansend vcan0 263#3C    # temp 20°C (0x3C=60, 60-40)
+cansend vcan0 263#28    # temp 0°C  (0x28=40)
 
 # or the full loop:
 sudo pacman -S python-can   # one-time

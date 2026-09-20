@@ -77,12 +77,22 @@ struct CanNightConfig
     uint8_t onValue = 0;
 };
 
+struct CanTempConfig
+{
+    bool present = false;
+    uint32_t canId = 0;
+    uint8_t byteIndex = 0;
+    double factor = 1.0;
+    double offset = 0.0;
+};
+
 struct CanMap
 {
     std::vector<CanButtonBinding> buttons;
     CanIgnitionConfig ignition;
     CanSpeedConfig speed;
     CanNightConfig nightMode;
+    CanTempConfig tempExt;
 };
 
 // CanBridge: socketcan reader thread translating CAN frames into actions.
@@ -139,6 +149,8 @@ private:
     bool nightKnown_;
     bool nightOn_;
     double lastSpeed_;
+    bool tempKnown_;
+    int lastTemp_;
 };
 
 }
