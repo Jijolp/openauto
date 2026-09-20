@@ -10,8 +10,7 @@ Usage:
     sudo ip link add dev vcan0 type vcan # one-time per boot (human, needs sudo)
     sudo ip link set up vcan0            # one-time per boot (human, needs sudo)
     python3 car/sim.py                   # loop: ignition + speed ramp + buttons
-    python3 car/sim.py --once            # single pass then exit
-    python3 car/sim.py --interface can0  # real hardware later
+    python3 car/sim.py --once            # single pass then exit    python3 car/sim.py --interface can0  # real hardware later
 
 Run from the OpenAuto directory so relative paths stay valid.
 """
@@ -28,7 +27,7 @@ IGNITION_ID = 0x260
 SPEED_ID = 0x261
 NIGHT_ID = 0x262
 BTN_A_ID = 0x266  # seek_next 0x08, seek_prev 0x04, toggle_play 0x02, voice 0x01
-BTN_B_ID = 0x267  # ok_enter 0x01, back 0x02
+BTN_B_ID = 0x267  # ok_enter 0x01, back 0x02, vol_up 0x04, vol_down 0x08
 
 # (frame id, byte0 value, label) — each press is followed by a release.
 BUTTON_SEQUENCE = [
@@ -38,6 +37,8 @@ BUTTON_SEQUENCE = [
     (BTN_A_ID, 0x01, "voice MICROPHONE_1"),
     (BTN_B_ID, 0x01, "ok ENTER"),
     (BTN_B_ID, 0x02, "back BACK"),
+    (BTN_B_ID, 0x04, "vol_up VOLUME_UP"),
+    (BTN_B_ID, 0x08, "vol_down VOLUME_DOWN"),
 ]
 
 PRESS_HOLD_S = 0.3

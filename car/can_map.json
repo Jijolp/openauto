@@ -6,7 +6,9 @@
     {"name": "toggle_play", "can_id": "0x266", "byte": 0, "mask": "0x02", "press": "0x02", "release": "0x00", "aa_button": "TOGGLE_PLAY"},
     {"name": "voice_cmd",   "can_id": "0x266", "byte": 0, "mask": "0x01", "press": "0x01", "release": "0x00", "aa_button": "MICROPHONE_1"},
     {"name": "ok_enter",    "can_id": "0x267", "byte": 0, "mask": "0x01", "press": "0x01", "release": "0x00", "aa_button": "ENTER"},
-    {"name": "back",        "can_id": "0x267", "byte": 0, "mask": "0x02", "press": "0x02", "release": "0x00", "aa_button": "BACK"}
+    {"name": "back",        "can_id": "0x267", "byte": 0, "mask": "0x02", "press": "0x02", "release": "0x00", "aa_button": "BACK"},
+    {"name": "vol_up",      "can_id": "0x267", "byte": 0, "mask": "0x04", "press": "0x04", "release": "0x00", "aa_button": "volume_up"},
+    {"name": "vol_down",    "can_id": "0x267", "byte": 0, "mask": "0x08", "press": "0x08", "release": "0x00", "aa_button": "volume_down"}
   ],
   "ignition":   {"can_id": "0x260", "byte": 0, "mask": "0x01", "on": "0x01", "off": "0x00"},
   "speed":      {"can_id": "0x261", "byte": 0, "factor": 1.0},

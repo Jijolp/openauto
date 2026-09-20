@@ -45,16 +45,20 @@ AA keycodes available in this aasdk proto snapshot (`ButtonCodeEnum.proto`):
 ```
 NONE MENU HOME BACK PHONE CALL_END UP DOWN LEFT RIGHT ENTER
 MICROPHONE_1 MICROPHONE_2 TOGGLE_PLAY NEXT PREV PLAY PAUSE SCROLL_WHEEL
+VOLUME_UP VOLUME_DOWN
 ```
 
-⚠️ **No volume codes** (`VOLUME_UP/DOWN`) and no `PLAY_PAUSE` exist in this
-snapshot — use `TOGGLE_PLAY` (+ `NEXT`/`PREV`) for steering-wheel audio keys.
-Volume/GALA wiring to real AA semantics comes with the later sensor work.
+`VOLUME_UP/DOWN` were added with the InputSource work (Android values
+24/25): they flow through the new channel as `KEYCODE_VOLUME_UP/DOWN`
+(the legacy enum carries them too, harmlessly). There is still no
+`PLAY_PAUSE` short name — use `TOGGLE_PLAY` (= `MEDIA_PLAY_PAUSE`).
 
 Binding: at startup the factory unions the map's `aa_button` codes into the
-declared discovery keycodes, so the phone's `BindingRequest` can cover them
-(log: `[InputService] binding request, scan codes count: N` — must be > 0
-with CAN buttons declared). Buttons also stay subject to `openauto.ini`
+declared discovery keycodes (legacy `supported_keycodes` + inputsource
+`keycodes_supported` via the legacy→Android table), so the phone's
+`BindingRequest`/`KeyBindingRequest` can cover them
+(logs: `[InputService] binding request, scan codes count: N` and
+`[InputSourceService] key binding request, keycodes count: M`). Buttons also stay subject to `openauto.ini`
 `Input.*Button` checkboxes for the keyboard path.
 
 ## Manual test (no phone needed for parsing)

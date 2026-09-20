@@ -92,6 +92,8 @@ bool parseButtonCode(const QString& name, aasdk::proto::enums::ButtonCode::Enum&
         {"LEFT", aasdk::proto::enums::ButtonCode::LEFT},
         {"RIGHT", aasdk::proto::enums::ButtonCode::RIGHT},
         {"ENTER", aasdk::proto::enums::ButtonCode::ENTER},
+        {"VOLUME_UP", aasdk::proto::enums::ButtonCode::VOLUME_UP},
+        {"VOLUME_DOWN", aasdk::proto::enums::ButtonCode::VOLUME_DOWN},
         {"MICROPHONE_1", aasdk::proto::enums::ButtonCode::MICROPHONE_1},
         {"TOGGLE_PLAY", aasdk::proto::enums::ButtonCode::TOGGLE_PLAY},
         {"NEXT", aasdk::proto::enums::ButtonCode::NEXT},
