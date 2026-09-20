@@ -183,7 +183,7 @@ QScrollBar::handle:vertical:hover {
 
 /* ---- Status bar overlay (object names, see StatusBar.cpp) ---- */
 StatusBar {
-    background: rgba(13, 13, 15, 180);
+    background: #0D0D0F;
 }
 
 #labelClock {
@@ -224,7 +224,7 @@ QPushButton#quadrantParams {
     border: 1px solid #2A2A30;
     color: #F5F5F5;
     font-family: "Inter", sans-serif;
-    font-size: 13px;
+    font-size: 32px;
     font-weight: 600;
     letter-spacing: 1.6px;
     padding: 18px;
@@ -282,23 +282,23 @@ QPushButton#quadrantCar:disabled {
 
 /* center Mercedes logo button (tappable → screen off), 180px per UiConstants */
 QPushButton#centerLogoButton {
-    background: transparent;
+    background: #0D0D0F;
     border: 1px solid #2A2A30;
     border-radius: 90px;
     padding: 0px;
 }
 QPushButton#centerLogoButton:hover {
     border: 1px solid #3A3A40;
-    background: rgba(23, 23, 27, 0.6);
+    background: #17171B;
 }
 QPushButton#centerLogoButton:pressed {
-    background: rgba(215, 25, 32, 0.12);
+    background: #D71920;
     border: 1px solid #D71920;
 }
 
 /* AA bandeau home button (inside StatusBar, 48px hit) */
 QPushButton#aaHomeButton {
-    background: rgba(23, 23, 27, 0.95);
+    background: #17171B;
     border: 1px solid #2A2A30;
     border-radius: 8px;
     padding: 0px;
@@ -328,4 +328,11 @@ QPushButton#nightToggle {
 QPushButton#nightToggle:checked {
     background: #1A1A1A;
     border: 1px solid #3A3A40;
+}
+
+/* SOON badge on disabled quadrants */
+QLabel#soonBadge {
+    color: #9E9E9E;
+    background: transparent;
+    padding: 2px 6px;
 }

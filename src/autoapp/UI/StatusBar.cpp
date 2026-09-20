@@ -95,8 +95,8 @@ void StatusBar::setAaMode(bool on)
 void StatusBar::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
-    painter.fillRect(rect(), night_ ? QColor(0, 0, 0, 220)
-                                    : QColor(13, 13, 15, 180));
+    painter.fillRect(rect(), night_ ? QColor(0, 0, 0)
+                                    : QColor(13, 13, 15));
 }
 
 void StatusBar::updateClock()
