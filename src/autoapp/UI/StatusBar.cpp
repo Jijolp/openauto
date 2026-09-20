@@ -1,15 +1,13 @@
 /*
 *  This file is part of openauto project.
-*  (UI-1 head-unit overlay: clock + placeholders, click-transparent so the
-*  AA touch path underneath keeps working.)
+*  (UI-2a head-unit status band: clock + placeholders, click-transparent.)
 */
 
 #include <QHBoxLayout>
-#include <QGuiApplication>
 #include <QPainter>
-#include <QScreen>
 #include <QTime>
 #include <f1x/openauto/autoapp/UI/StatusBar.hpp>
+#include <f1x/openauto/autoapp/UI/UiConstants.hpp>
 
 namespace f1x
 {
@@ -21,33 +19,27 @@ namespace ui
 {
 
 StatusBar::StatusBar(QWidget* parent)
-    // Qt::Tool: no taskbar entry. X11BypassWindowManagerHint: stay above
-    // the fullscreen AA video window (a plain StayOnTop is stacked below
-    // fullscreen by the WM). Input stays untouched via
-    // WA_TransparentForMouseEvents (see below).
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool | Qt::X11BypassWindowManagerHint)
+    : QWidget(parent, parent != nullptr ? Qt::Widget
+                                        : Qt::WindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool | Qt::X11BypassWindowManagerHint))
     , labelClock_(new QLabel(this))
     , labelTemp_(new QLabel(QStringLiteral("--°C"), this))
     , labelSignal_(new QLabel(QStringLiteral("NO SIG"), this))
     , timer_(new QTimer(this))
+    , night_(false)
 {
-    setAttribute(Qt::WA_TranslucentBackground);
+    // Never grabs input: taps fall through to the page below (the AA
+    // touch path when the video page is shown).
     setAttribute(Qt::WA_TransparentForMouseEvents);
     setFocusPolicy(Qt::NoFocus);
-
-    // Fallback background until the external theme (assets/theme.qss) is
-    // loaded; the QSS background rule overrides this palette cleanly.
-    QPalette palette;
-    palette.setColor(QPalette::Window, QColor(13, 13, 15, 180));
-    setPalette(palette);
-    setAutoFillBackground(true);
+    setFixedHeight(UiConstants::STATUS_BAR_HEIGHT);
 
     labelClock_->setObjectName(QStringLiteral("labelClock"));
     labelTemp_->setObjectName(QStringLiteral("labelTemp"));
     labelSignal_->setObjectName(QStringLiteral("labelSignal"));
 
     auto* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(12, 0, 12, 0);
+    layout->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
+                               UiConstants::STATUS_BAR_MARGIN, 0);
     layout->addWidget(labelClock_);
     layout->addStretch();
     layout->addWidget(labelTemp_);
@@ -58,18 +50,20 @@ StatusBar::StatusBar(QWidget* parent)
     this->updateClock();
 }
 
-void StatusBar::attachTo()
+void StatusBar::setNightMode(bool on)
 {
-    QScreen* screen = QGuiApplication::primaryScreen();
-    const QRect geometry = screen != nullptr ? screen->geometry() : QRect(0, 0, 1024, 600);
-    this->setGeometry(geometry.x(), geometry.y(), geometry.width(), height_);
-    this->show();
+    if(night_ != on)
+    {
+        night_ = on;
+        this->update();
+    }
 }
 
 void StatusBar::paintEvent(QPaintEvent*)
 {
     QPainter painter(this);
-    painter.fillRect(rect(), QColor(13, 13, 15, 180));
+    painter.fillRect(rect(), night_ ? QColor(0, 0, 0, 220)
+                                    : QColor(13, 13, 15, 180));
 }
 
 void StatusBar::updateClock()

@@ -18,7 +18,6 @@
 
 #include <thread>
 #include <QApplication>
-#include <QFile>
 #include <f1x/aasdk/USB/USBHub.hpp>
 #include <f1x/aasdk/USB/ConnectedAccessoriesEnumerator.hpp>
 #include <f1x/aasdk/USB/AccessoryModeQueryChain.hpp>
@@ -32,7 +31,7 @@
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/Configuration.hpp>
 #include <f1x/openauto/autoapp/UI/MainWindow.hpp>
-#include <f1x/openauto/autoapp/UI/StatusBar.hpp>
+#include <f1x/openauto/autoapp/UI/UiConstants.hpp>
 #include <f1x/openauto/autoapp/UI/SettingsWindow.hpp>
 #include <f1x/openauto/autoapp/UI/ConnectDialog.hpp>
 #include <f1x/openauto/Common/Log.hpp>
@@ -87,20 +86,17 @@ int main(int argc, char* argv[])
 
     QApplication qApplication(argc, argv);
 
-    // UI-1 external theme (assets/theme.qss, NOT compiled in).
-    // Falls back to the palette defaults if the file is missing.
-    QFile themeFile(QCoreApplication::applicationDirPath() + QStringLiteral("/../assets/theme.qss"));
-    if(themeFile.open(QFile::ReadOnly))
-    {
-        qApplication.setStyleSheet(QString::fromUtf8(themeFile.readAll()));
-    }
+    // UI-2a single window: status band + [Home|AA|Settings] stack inside
+    // MainWindow (theme loaded there, incl. night variant). No separate
+    // top-level windows anymore (video embeds into the AA page).
     autoapp::ui::MainWindow mainWindow;
     // Head-unit target: frameless fullscreen. OPENAUTO_WINDOWED=1 keeps a
-    // fixed 1024x600 window for development on PC.
+    // fixed window for development on PC (see UiConstants).
     const bool windowed = qEnvironmentVariableIsSet("OPENAUTO_WINDOWED");
     if(windowed)
     {
-        mainWindow.resize(1024, 600);
+        mainWindow.resize(autoapp::ui::UiConstants::WINDOWED_WIDTH,
+                          autoapp::ui::UiConstants::WINDOWED_HEIGHT);
     }
     else
     {
@@ -141,11 +137,6 @@ int main(int argc, char* argv[])
     {
         mainWindow.showFullScreen();
     }
-
-    // UI-1 overlay: clock + placeholders above everything (incl. AA video).
-    // Click-transparent, so the touch path underneath is untouched.
-    autoapp::ui::StatusBar statusBar;
-    statusBar.attachTo();
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);

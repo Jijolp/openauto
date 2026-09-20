@@ -1,7 +1,10 @@
 /*
 *  This file is part of openauto project.
-*  (UI-1 head-unit overlay: clock + placeholders, click-transparent so the
-*  AA touch path underneath keeps working.)
+*  (UI-2a head-unit status band: clock + placeholders. Lives INSIDE the
+*  single MainWindow, fixed above the page stack on every page — no
+*  longer a top-level overlay (the overlay was invisible under the
+*  fullscreen video on Hyprland, and the video is now embedded anyway).
+*  Still click-transparent so taps fall through to the page below.)
 */
 
 #pragma once
@@ -23,31 +26,27 @@ class StatusBar : public QWidget
 {
     Q_OBJECT
 public:
-    // Width is set by attachTo() from the main window geometry.
+    // Embedded mode (parent != nullptr): plain child widget sized by the
+    // MainWindow layout. The legacy top-level overlay flags are only
+    // kept for the parentless fallback (unused by the app).
     explicit StatusBar(QWidget* parent = nullptr);
 
-    // Positions this overlay on top of the screen (same x/y/width as the
-    // primary screen, 40 px high) so it stays above the fullscreen AA
-    // video window, which is a separate top-level window. Never grabs
-    // input: WA_TransparentForMouseEvents lets touch events reach the
-    // video below.
-    void attachTo();
+    void setNightMode(bool on);
 
 protected:
-    // WA_TranslucentBackground inhibits background painting (both palette
-    // and QSS background are ignored), so the translucent bar is painted
-    // manually. Children (labels) are still styled by theme.qss.
+    // Manual background paint (same as UI-1: translucent look also works
+    // embedded; children labels stay styled by theme.qss).
     void paintEvent(QPaintEvent* event) override;
 
 private slots:
     void updateClock();
 
 private:
-    static constexpr int height_ = 40;
     QLabel* labelClock_;
     QLabel* labelTemp_;
     QLabel* labelSignal_;
     QTimer* timer_;
+    bool night_;
 };
 
 }
