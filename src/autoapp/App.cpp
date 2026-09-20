@@ -150,8 +150,12 @@ void App::onAndroidAutoQuit()
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[App] quit.";
 
-        androidAutoEntity_->stop();
-        androidAutoEntity_.reset();
+        // A pre-session USB error can trigger quit with no entity (§13).
+        if(androidAutoEntity_ != nullptr)
+        {
+            androidAutoEntity_->stop();
+            androidAutoEntity_.reset();
+        }
 
         if(!isStopped_)
         {
