@@ -20,6 +20,7 @@
 
 #include <QObject>
 #include <QKeyEvent>
+#include <vector>
 #include <f1x/openauto/autoapp/Projection/IInputDevice.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
 
@@ -56,7 +57,11 @@ private:
     configuration::IConfiguration::Pointer configuration_;
     QRect touchscreenGeometry_;
     QRect displayGeometry_;
-    IInputDeviceEventHandler* eventHandler_;
+    // Multiple subscribers (legacy InputService + InputSourceService):
+    // the Qt filter is installed once at the first start, every subscriber
+    // receives the events, and each service drops them at send time when
+    // suppressed by the binding arbitration.
+    std::vector<IInputDeviceEventHandler*> eventHandlers_;
     std::mutex mutex_;
 };
 

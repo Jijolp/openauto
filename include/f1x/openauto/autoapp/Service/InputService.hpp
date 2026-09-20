@@ -18,9 +18,11 @@
 
 #pragma once
 
+#include <atomic>
 #include <aasdk_proto/ButtonCodeEnum.pb.h>
 #include <f1x/aasdk/Channel/Input/InputServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/IService.hpp>
+#include <f1x/openauto/autoapp/Service/InputBindingState.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
 #ifdef USE_CAN
@@ -43,7 +45,7 @@ class InputService:
         public std::enable_shared_from_this<InputService>
 {
 public:
-    InputService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice);
+    InputService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice, InputBindingState::Pointer bindingState);
 
     void start() override;
     void stop() override;
@@ -60,6 +62,8 @@ private:
     boost::asio::io_context::strand strand_;
     aasdk::channel::input::InputServiceChannel::Pointer channel_;
     projection::IInputDevice::Pointer inputDevice_;
+    InputBindingState::Pointer bindingState_;
+    std::atomic<bool> suppressed_;
 #ifdef USE_CAN
     projection::CanBridge::Pointer canBridge_;
 #endif

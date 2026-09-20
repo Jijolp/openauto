@@ -29,10 +29,12 @@ namespace autoapp
 namespace service
 {
 
-InputService::InputService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice)
+InputService::InputService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice, InputBindingState::Pointer bindingState)
     : strand_(ioService)
     , channel_(std::make_shared<aasdk::channel::input::InputServiceChannel>(strand_, std::move(messenger)))
     , inputDevice_(std::move(inputDevice))
+    , bindingState_(std::move(bindingState))
+    , suppressed_(false)
 {
 #ifdef USE_CAN
     canBridge_ = std::make_shared<projection::CanBridge>(*this,
@@ -135,7 +137,16 @@ void InputService::onBindingRequest(const aasdk::proto::messages::BindingRequest
 
     if(status == aasdk::proto::enums::Status::OK)
     {
-        inputDevice_->start(*this);
+        bindingState_->legacyBound = true;
+        if(bindingState_->inputSourceBound)
+        {
+            suppressed_ = true;
+            OPENAUTO_LOG(info) << "[InputService] suppressed: input source channel bound first.";
+        }
+        else
+        {
+            inputDevice_->start(*this);
+        }
     }
 
     OPENAUTO_LOG(info) << "[InputService] binding request, status: " << status;
@@ -153,6 +164,12 @@ void InputService::onChannelError(const aasdk::error::Error& e)
 
 void InputService::onButtonEvent(const projection::ButtonEvent& event)
 {
+    if(suppressed_)
+    {
+        OPENAUTO_LOG(debug) << "[InputService] button event dropped (input source channel active).";
+        return;
+    }
+
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {
@@ -182,6 +199,12 @@ void InputService::onButtonEvent(const projection::ButtonEvent& event)
 
 void InputService::onTouchEvent(const projection::TouchEvent& event)
 {
+    if(suppressed_)
+    {
+        OPENAUTO_LOG(debug) << "[InputService] touch event dropped (input source channel active).";
+        return;
+    }
+
     auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
 
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this(), event = std::move(event), timestamp = std::move(timestamp)]() {

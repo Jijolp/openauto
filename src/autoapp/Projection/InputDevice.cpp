@@ -34,7 +34,6 @@ InputDevice::InputDevice(QObject& parent, configuration::IConfiguration::Pointer
     , configuration_(std::move(configuration))
     , touchscreenGeometry_(touchscreenGeometry)
     , displayGeometry_(displayGeometry)
-    , eventHandler_(nullptr)
 {
     this->moveToThread(parent.thread());
 }
@@ -43,9 +42,20 @@ void InputDevice::start(IInputDeviceEventHandler& eventHandler)
 {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    OPENAUTO_LOG(info) << "[InputDevice] start.";
-    eventHandler_ = &eventHandler;
-    parent_.installEventFilter(this);
+    if(std::find(eventHandlers_.begin(), eventHandlers_.end(), &eventHandler) == eventHandlers_.end())
+    {
+        eventHandlers_.push_back(&eventHandler);
+    }
+
+    if(eventHandlers_.size() == 1)
+    {
+        OPENAUTO_LOG(info) << "[InputDevice] start (first subscriber, filter installed).";
+        parent_.installEventFilter(this);
+    }
+    else
+    {
+        OPENAUTO_LOG(info) << "[InputDevice] start (filter already installed).";
+    }
 }
 
 void InputDevice::stop()
@@ -54,14 +64,14 @@ void InputDevice::stop()
 
     OPENAUTO_LOG(info) << "[InputDevice] stop.";
     parent_.removeEventFilter(this);
-    eventHandler_ = nullptr;
+    eventHandlers_.clear();
 }
 
 bool InputDevice::eventFilter(QObject* obj, QEvent* event)
 {
     std::lock_guard<decltype(mutex_)> lock(mutex_);
 
-    if(eventHandler_ != nullptr)
+    if(!eventHandlers_.empty())
     {
         if(event->type() == QEvent::KeyPress || event->type() == QEvent::KeyRelease)
         {
@@ -173,7 +183,10 @@ bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
     {
         if(buttonCode != aasdk::proto::enums::ButtonCode::SCROLL_WHEEL || event->type() == QEvent::KeyRelease)
         {
-            eventHandler_->onButtonEvent({eventType, wheelDirection, buttonCode});
+            for(auto* handler : eventHandlers_)
+            {
+                handler->onButtonEvent({eventType, wheelDirection, buttonCode});
+            }
         }
     }
 
@@ -209,7 +222,10 @@ bool InputDevice::handleTouchEvent(QEvent* event)
     {
         const uint32_t x = (static_cast<float>(mouse->pos().x()) / touchscreenGeometry_.width()) * displayGeometry_.width();
         const uint32_t y = (static_cast<float>(mouse->pos().y()) / touchscreenGeometry_.height()) * displayGeometry_.height();
-        eventHandler_->onTouchEvent({type, x, y, 0});
+        for(auto* handler : eventHandlers_)
+        {
+            handler->onTouchEvent({type, x, y, 0});
+        }
     }
 
     return true;

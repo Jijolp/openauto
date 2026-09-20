@@ -24,6 +24,7 @@
 #include <f1x/aasdk/Channel/AV/SpeechAudioServiceChannel.hpp>
 #include <f1x/openauto/autoapp/Service/ServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Service/VideoService.hpp>
+#include <f1x/openauto/autoapp/Service/InputSourceService.hpp>
 #include <f1x/openauto/autoapp/Service/MediaAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/SpeechAudioService.hpp>
 #include <f1x/openauto/autoapp/Service/SystemAudioService.hpp>
@@ -73,7 +74,7 @@ ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messeng
     serviceList.emplace_back(std::make_shared<SensorService>(ioService_, messenger));
     serviceList.emplace_back(this->createVideoService(messenger));
     serviceList.emplace_back(this->createBluetoothService(messenger));
-    serviceList.emplace_back(this->createInputService(messenger));
+    this->createInputServices(serviceList, messenger);
 
     return serviceList;
 }
@@ -113,7 +114,7 @@ IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMess
     return std::make_shared<BluetoothService>(ioService_, messenger, std::move(bluetoothDevice));
 }
 
-IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenger::Pointer messenger)
+void ServiceFactory::createInputServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger)
 {
 #ifdef USE_CAN
     // Union the CAN-mapped buttons into the declared keycodes so the phone
@@ -158,7 +159,12 @@ IService::Pointer ServiceFactory::createInputService(aasdk::messenger::IMessenge
     QRect screenGeometry = screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();
     projection::IInputDevice::Pointer inputDevice(std::make_shared<projection::InputDevice>(*QApplication::instance(), configuration_, std::move(screenGeometry), std::move(videoGeometry)));
 
-    return std::make_shared<InputService>(ioService_, messenger, std::move(inputDevice));
+    // Dual input: legacy (channel 1, old phones) + InputSource (channel 9,
+    // AAP 1.6+). Both share the device and the binding arbitration: the
+    // first bound channel stays active, the other is suppressed.
+    auto bindingState = std::make_shared<InputBindingState>();
+    serviceList.emplace_back(std::make_shared<InputService>(ioService_, messenger, inputDevice, bindingState));
+    serviceList.emplace_back(std::make_shared<InputSourceService>(ioService_, messenger, std::move(inputDevice), std::move(bindingState)));
 }
 
 void ServiceFactory::createAudioServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger)
