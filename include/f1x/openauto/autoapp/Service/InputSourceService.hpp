@@ -1,0 +1,79 @@
+/*
+*  This file is part of openauto project.
+*  Copyright (C) 2018 f1x.studio (Michal Szwaj)
+*
+*  openauto is free software: you can redistribute it and/or modify
+*  it under the terms of the GNU General Public License as published by
+*  the Free Software Foundation; either version 3 of the License, or
+*  (at your option) any later version.
+
+*  openauto is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
+*  You should have received a copy of the GNU General Public License
+*  along with openauto. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#pragma once
+
+#include <atomic>
+#include <aasdk_proto/AndroidKeyCodeEnum.pb.h>
+#include <f1x/aasdk/Channel/InputSource/InputSourceChannel.hpp>
+#include <f1x/openauto/autoapp/Service/IService.hpp>
+#include <f1x/openauto/autoapp/Service/InputBindingState.hpp>
+#include <f1x/openauto/autoapp/Projection/IInputDevice.hpp>
+#include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
+
+namespace f1x
+{
+namespace openauto
+{
+namespace autoapp
+{
+namespace service
+{
+
+// Input service for the InputSource channel (AAP 1.6+, channel id 9).
+// Mirrors InputService (legacy channel): same discovery/open/binding flow,
+// but declares Android keycodes and sends InputReport messages with a
+// microsecond timestamp on every report. Single-touch in phase 2a
+// (action_index = 0); multitouch is phase 2b.
+class InputSourceService:
+
+        public aasdk::channel::inputsource::IInputSourceChannelEventHandler,
+
+        public IService,
+
+        public projection::IInputDeviceEventHandler,
+
+        public std::enable_shared_from_this<InputSourceService>
+
+{
+public:
+    InputSourceService(boost::asio::io_context& ioService, aasdk::messenger::IMessenger::Pointer messenger, projection::IInputDevice::Pointer inputDevice, InputBindingState::Pointer bindingState);
+
+    void start() override;
+    void stop() override;
+    void fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse& response) override;
+    void onChannelOpenRequest(const aasdk::proto::messages::ChannelOpenRequest& request) override;
+    void onKeyBindingRequest(const aasdk::proto::messages::KeyBindingRequest& request) override;
+    void onChannelError(const aasdk::error::Error& e) override;
+    void onButtonEvent(const projection::ButtonEvent& event) override;
+    void onTouchEvent(const projection::TouchEvent& event) override;
+
+private:
+    using std::enable_shared_from_this<InputSourceService>::shared_from_this;
+
+    boost::asio::io_context::strand strand_;
+    aasdk::channel::inputsource::InputSourceChannel::Pointer channel_;
+    projection::IInputDevice::Pointer inputDevice_;
+    InputBindingState::Pointer bindingState_;
+    std::atomic<bool> suppressed_;
+};
+
+}
+}
+}
+}
