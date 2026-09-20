@@ -159,12 +159,21 @@ void ServiceFactory::createInputServices(ServiceList& serviceList, aasdk::messen
     QRect screenGeometry = screen == nullptr ? QRect(0, 0, 1, 1) : screen->geometry();
     projection::IInputDevice::Pointer inputDevice(std::make_shared<projection::InputDevice>(*QApplication::instance(), configuration_, std::move(screenGeometry), std::move(videoGeometry)));
 
-    // Dual input: legacy (channel 1, old phones) + InputSource (channel 9,
-    // AAP 1.6+). Both share the device and the binding arbitration: the
-    // first bound channel stays active, the other is suppressed.
+    // Dual input: legacy input (undisclosed since S3) + InputSource
+    // (channel 8, AAP 1.6+). Both share the device and the binding
+    // arbitration: the first bound channel stays active, the other is
+    // suppressed.
     auto bindingState = std::make_shared<InputBindingState>();
-    serviceList.emplace_back(std::make_shared<InputService>(ioService_, messenger, inputDevice, bindingState));
-    serviceList.emplace_back(std::make_shared<InputSourceService>(ioService_, messenger, std::move(inputDevice), std::move(bindingState)));
+    auto legacyInput = std::make_shared<InputService>(ioService_, messenger, inputDevice, bindingState);
+    auto modernInput = std::make_shared<InputSourceService>(ioService_, messenger, inputDevice, bindingState);
+#ifdef USE_CAN
+    // S3: CAN buttons feed both channels (legacy is undisclosed since the
+    // field-4 replacement: it would never open, so legacy-only feed would
+    // silence CAN).
+    legacyInput->getCanBridge()->addEventHandler(*modernInput);
+#endif
+    serviceList.emplace_back(std::move(legacyInput));
+    serviceList.emplace_back(std::move(modernInput));
 }
 
 void ServiceFactory::createAudioServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger)

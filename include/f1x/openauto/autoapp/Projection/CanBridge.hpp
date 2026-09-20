@@ -106,6 +106,10 @@ public:
     void stop();
     bool isRunning() const;
 
+    // Extra sinks (e.g. the InputSourceService alongside the legacy
+    // InputService): every button press/release is delivered to all.
+    void addEventHandler(IInputDeviceEventHandler& eventHandler);
+
     static std::string interfaceFromEnv();
     static std::string mapPathFromEnv();
     static CanMap loadMap(const std::string& mapPath);
@@ -120,6 +124,7 @@ private:
     void handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc);
 
     IInputDeviceEventHandler& eventHandler_;
+    std::vector<IInputDeviceEventHandler*> extraHandlers_;
     std::string interfaceName_;
     std::string mapPath_;
     CanMap map_;

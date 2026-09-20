@@ -67,33 +67,11 @@ void InputService::stop()
 
 void InputService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse& response)
 {
-    OPENAUTO_LOG(info) << "[InputService] fill features.";
-
-    auto* channelDescriptor = response.add_channels();
-    channelDescriptor->set_channel_id(static_cast<uint32_t>(channel_->getId()));
-
-    auto* inputChannel = channelDescriptor->mutable_input_channel();
-
-    const auto& supportedButtonCodes = inputDevice_->getSupportedButtonCodes();
-
-    for(const auto& buttonCode : supportedButtonCodes)
-    {
-        inputChannel->add_supported_keycodes(buttonCode);
-    }
-
-    if(inputDevice_->hasTouchscreen())
-    {
-        const auto& touchscreenSurface = inputDevice_->getTouchscreenGeometry();
-        auto touchscreenConfig = inputChannel->mutable_touch_screen_config();
-
-        touchscreenConfig->set_width(touchscreenSurface.width());
-        touchscreenConfig->set_height(touchscreenSurface.height());
-
-        // S3: touch_pad_config NOT declared. Under AAP 1.6 numbering our
-        // legacy field 3 parses as the InputSourceService touchpad field:
-        // declaring it tells the phone the primary pointer is a touchpad,
-        // which plausibly routes touchscreen taps to nowhere. Revisit on evidence.
-    }
+    // S3: legacy input is NOT disclosed in discovery anymore. The phone
+    // reads discovery field 4 as the (modern) input service; disclosing
+    // both made it bind legacy and ignore the modern channel. The service
+    // stays constructed (CanBridge/keyboard feed it) but idle.
+    OPENAUTO_LOG(info) << "[InputService] fill features (undisclosed).";
 }
 
 void InputService::onChannelOpenRequest(const aasdk::proto::messages::ChannelOpenRequest& request)

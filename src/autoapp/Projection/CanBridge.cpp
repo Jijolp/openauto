@@ -172,6 +172,15 @@ bool CanBridge::isRunning() const
     return running_;
 }
 
+void CanBridge::addEventHandler(IInputDeviceEventHandler& eventHandler)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(std::find(extraHandlers_.begin(), extraHandlers_.end(), &eventHandler) == extraHandlers_.end())
+    {
+        extraHandlers_.push_back(&eventHandler);
+    }
+}
+
 std::string CanBridge::interfaceFromEnv()
 {
     if(const char* value = std::getenv(cCanInterfaceEnvVar))
@@ -434,6 +443,10 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
         event.wheelDirection = WheelDirection::NONE;
         event.code = binding.aaButton;
         eventHandler_.onButtonEvent(event);
+        for(auto* handler : extraHandlers_)
+        {
+            handler->onButtonEvent(event);
+        }
     }
 
     if(map_.ignition.present && map_.ignition.canId == canId && map_.ignition.byteIndex < dlc)

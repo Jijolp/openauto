@@ -56,6 +56,10 @@ public:
     void onButtonEvent(const projection::ButtonEvent& event) override;
     void onTouchEvent(const projection::TouchEvent& event) override;
 
+#ifdef USE_CAN
+    projection::CanBridge::Pointer getCanBridge() { return canBridge_; }
+#endif
+
 private:
     using std::enable_shared_from_this<InputService>::shared_from_this;
 
