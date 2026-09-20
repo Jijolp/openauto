@@ -89,11 +89,10 @@ void InputService::fillFeatures(aasdk::proto::messages::ServiceDiscoveryResponse
         touchscreenConfig->set_width(touchscreenSurface.width());
         touchscreenConfig->set_height(touchscreenSurface.height());
 
-        // Some phones only enable touch input when a touchpad surface is
-        // also declared: mirror the touchscreen geometry there.
-        auto touchpadConfig = inputChannel->mutable_touch_pad_config();
-        touchpadConfig->set_width(touchscreenSurface.width());
-        touchpadConfig->set_height(touchscreenSurface.height());
+        // S3: touch_pad_config NOT declared. Under AAP 1.6 numbering our
+        // legacy field 3 parses as the InputSourceService touchpad field:
+        // declaring it tells the phone the primary pointer is a touchpad,
+        // which plausibly routes touchscreen taps to nowhere. Revisit on evidence.
     }
 }
 
