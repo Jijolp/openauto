@@ -1,22 +1,25 @@
 /* ==========================================================================
- * OpenAuto head-unit theme (UI-1, extended UI-2a) — loaded at startup from
+ * OpenAuto head-unit theme (UI-2b Nothing/Mercedes) — loaded at startup from
  * <repo>/assets/theme.qss (NOT compiled in). Edit & restart to preview.
  *
  * Palette (Nothing-style):
  *   @background  #0D0D0F   main windows, idle screen
- *   @panel       #17171B   dialogs, group boxes, inputs
+ *   @panel       #17171B   dialogs, group boxes, inputs, quadrants
+ *   @panel-hi    #1E1E24   quadrant hover
  *   @border      #2A2A30   frames, separators
  *   @text        #F5F5F5   primary text
- *   @text-dim    #9E9E9E   secondary text, placeholders
+ *   @text-dim    #9E9E9E   secondary text, placeholders, SOON
  *   @accent      #D71920   Nothing red: buttons, focus, links, clock
  *   @accent-hi   #F02830   accent hover/pressed
  *   @on-accent   #FFFFFF   text on accent
  *   @overlay-bg  rgba(13, 13, 15, 180)  status bar over video
+ *   Inter — bundled in assets/fonts, fallback sans-serif.
  * ========================================================================== */
 
 QMainWindow, QDialog, QWidget {
     background-color: #0D0D0F;
     color: #F5F5F5;
+    font-family: "Inter", sans-serif;
     font-size: 14px;
 }
 
@@ -199,4 +202,130 @@ StatusBar {
     color: #F5F5F5;
     font-size: 28px;
     font-weight: bold;
+    letter-spacing: 0.6px;
+}
+
+#pageSubtitle {
+    color: #9E9E9E;
+    font-size: 13px;
+    letter-spacing: 0.8px;
+}
+
+/* ---- UI-2b: home quadrants + Nothing premium ---- */
+#homePage {
+    background-color: #0D0D0F;
+}
+
+QPushButton#quadrantAA,
+QPushButton#quadrantRace,
+QPushButton#quadrantCar,
+QPushButton#quadrantParams {
+    background-color: #17171B;
+    border: 1px solid #2A2A30;
+    color: #F5F5F5;
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    padding: 18px;
+    /* wide empty feel: min-height via padding, border handled per id */
+}
+
+QPushButton#quadrantAA {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 70px;
+}
+QPushButton#quadrantRace {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 70px;
+    border-bottom-right-radius: 6px;
+}
+QPushButton#quadrantCar {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 70px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+QPushButton#quadrantParams {
+    border-top-left-radius: 70px;
+    border-top-right-radius: 6px;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+QPushButton#quadrantAA:hover,
+QPushButton#quadrantRace:hover,
+QPushButton#quadrantCar:hover,
+QPushButton#quadrantParams:hover {
+    background-color: #1E1E24;
+    border: 1px solid #D71920;
+}
+
+QPushButton#quadrantAA:pressed,
+QPushButton#quadrantRace:pressed,
+QPushButton#quadrantCar:pressed,
+QPushButton#quadrantParams:pressed {
+    background-color: #D71920;
+    color: #FFFFFF;
+    border: 1px solid #D71920;
+}
+
+QPushButton#quadrantRace:disabled,
+QPushButton#quadrantCar:disabled {
+    background-color: #0F0F12;
+    color: #6E6E6E;
+    border: 1px solid #1C1C20;
+}
+
+/* center Mercedes logo button (tappable → screen off) */
+QPushButton#centerLogoButton {
+    background: transparent;
+    border: 1px solid #2A2A30;
+    border-radius: 48px;
+    padding: 0px;
+}
+QPushButton#centerLogoButton:hover {
+    border: 1px solid #3A3A40;
+    background: rgba(23, 23, 27, 0.6);
+}
+QPushButton#centerLogoButton:pressed {
+    background: rgba(215, 25, 32, 0.12);
+    border: 1px solid #D71920;
+}
+
+/* AA bandeau home button (inside StatusBar, 48px hit) */
+QPushButton#aaHomeButton {
+    background: rgba(23, 23, 27, 0.95);
+    border: 1px solid #2A2A30;
+    border-radius: 8px;
+    padding: 0px;
+}
+QPushButton#aaHomeButton:hover {
+    border: 1px solid #D71920;
+    background: #1E1E24;
+}
+QPushButton#aaHomeButton:pressed {
+    background: #D71920;
+    border: 1px solid #D71920;
+}
+
+#devHint {
+    color: #6E6E6E;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+}
+QPushButton#nightToggle {
+    background: #17171B;
+    border: 1px solid #2A2A30;
+    border-radius: 6px;
+    font-size: 11px;
+    letter-spacing: 1.0px;
+    padding: 4px 10px;
+}
+QPushButton#nightToggle:checked {
+    background: #1A1A1A;
+    border: 1px solid #3A3A40;
 }
