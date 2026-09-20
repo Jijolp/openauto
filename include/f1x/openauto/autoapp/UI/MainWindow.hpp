@@ -88,6 +88,7 @@ private:
     StatusBar* statusBar_;
     QStackedWidget* stack_;
     QWidget* homePage_;
+    QWidget* gridContainer_;
     QWidget* aaPage_;
     QWidget* settingsPage_;
     QLabel* aaPlaceholder_;

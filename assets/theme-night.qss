@@ -284,7 +284,7 @@ QPushButton#quadrantCar:disabled {
 QPushButton#centerLogoButton {
     background: transparent;
     border: 1px solid #1C1C20;
-    border-radius: 48px;
+    border-radius: 90px;
     padding: 0px;
 }
 QPushButton#centerLogoButton:hover {

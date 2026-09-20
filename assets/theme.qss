@@ -280,11 +280,11 @@ QPushButton#quadrantCar:disabled {
     border: 1px solid #1C1C20;
 }
 
-/* center Mercedes logo button (tappable → screen off) */
+/* center Mercedes logo button (tappable → screen off), 180px per UiConstants */
 QPushButton#centerLogoButton {
     background: transparent;
     border: 1px solid #2A2A30;
-    border-radius: 48px;
+    border-radius: 90px;
     padding: 0px;
 }
 QPushButton#centerLogoButton:hover {

@@ -40,8 +40,8 @@ struct UiConstants
     static constexpr int QUADRANT_LABEL_FONT_SIZE = 13;
     static constexpr int QUADRANT_BADGE_FONT_SIZE = 10;
 
-    // Central Mercedes logo (geometry hand-drawn, tinted at runtime).
-    static constexpr int LOGO_HOME_SIZE = 96;
+    // Central Mercedes logo (human SVG via QSvgRenderer, QPainter fallback).
+    static constexpr int LOGO_HOME_SIZE = 180;
     static constexpr int LOGO_SPLASH_SIZE = 180;
     static constexpr int LOGO_AA_BUTTON_SIZE = 48;
     static constexpr int LOGO_AA_ICON_SIZE = 26;
