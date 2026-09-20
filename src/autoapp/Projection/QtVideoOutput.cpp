@@ -6,18 +6,16 @@
 *  it under the terms of the GNU General Public License as published by
 *  the Free Software Foundation; either version 3 of the License, or
 *  (at your option) any later version.
-
-*  openauto is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
 *
 *  You should have received a copy of the GNU General Public License
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <QApplication>
+#include <QVBoxLayout>
+#include <QWidget>
 #include <f1x/openauto/autoapp/Projection/QtVideoOutput.hpp>
+#include <f1x/openauto/autoapp/UI/HuEvents.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
 namespace f1x
@@ -31,6 +29,7 @@ namespace projection
 
 QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuration)
     : VideoOutput(std::move(configuration))
+    , videoWidget_(nullptr)
 {
     this->moveToThread(QApplication::instance()->thread());
     connect(this, &QtVideoOutput::startPlayback, this, &QtVideoOutput::onStartPlayback, Qt::QueuedConnection);
@@ -39,10 +38,20 @@ QtVideoOutput::QtVideoOutput(configuration::IConfiguration::Pointer configuratio
     QMetaObject::invokeMethod(this, "createVideoOutput", Qt::BlockingQueuedConnection);
 }
 
+QtVideoOutput::~QtVideoOutput()
+{
+    // Embedded widgets are owned by the host page (app lifetime); only
+    // the legacy parentless fallback window is owned here.
+    if(videoWidget_ != nullptr && videoWidget_->parent() == nullptr)
+    {
+        delete videoWidget_;
+    }
+}
+
 void QtVideoOutput::createVideoOutput()
 {
     OPENAUTO_LOG(debug) << "[QtVideoOutput] create.";
-    videoWidget_ = std::make_unique<QVideoWidget>();
+    videoWidget_ = new QVideoWidget(ui::HuEvents::videoHost());
     mediaPlayer_ = std::make_unique<QMediaPlayer>(nullptr, QMediaPlayer::StreamPlayback);
 }
 
@@ -70,21 +79,62 @@ void QtVideoOutput::write(uint64_t, const aasdk::common::DataConstBuffer& buffer
 
 void QtVideoOutput::onStartPlayback()
 {
+    QWidget* host = ui::HuEvents::videoHost();
     videoWidget_->setAspectRatioMode(Qt::IgnoreAspectRatio);
-    videoWidget_->setFocus();
-    videoWidget_->setWindowFlags(Qt::WindowStaysOnTopHint);
-    videoWidget_->setFullScreen(true);
-    videoWidget_->show();
 
-    mediaPlayer_->setVideoOutput(videoWidget_.get());
+    if(host != nullptr && host->layout() != nullptr)
+    {
+        // UI-2a single window: the video widget lives in the AA stack
+        // page. Drop widgets orphaned by previous sessions (their
+        // QtVideoOutput released ownership, see destructor), then embed.
+        // The GStreamer pipeline below keeps running untouched: hiding
+        // the page later only hides presentation, never the session.
+        const auto stale = host->findChildren<QVideoWidget*>(QString(), Qt::FindDirectChildrenOnly);
+        for(auto* widget : stale)
+        {
+            if(widget != videoWidget_)
+            {
+                host->layout()->removeWidget(widget);
+                widget->deleteLater();
+            }
+        }
+        if(videoWidget_->parent() != host)
+        {
+            videoWidget_->setParent(host);
+        }
+        if(auto* box = qobject_cast<QVBoxLayout*>(host->layout()))
+        {
+            box->addWidget(videoWidget_);
+        }
+        else
+        {
+            videoWidget_->setGeometry(host->rect());
+        }
+        videoWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        videoWidget_->show();
+        videoWidget_->setFocus();
+    }
+    else
+    {
+        // Legacy fallback (no host registered, e.g. unit context):
+        // separate fullscreen top-level window, as before UI-2a.
+        videoWidget_->setFocus();
+        videoWidget_->setWindowFlags(Qt::WindowStaysOnTopHint);
+        videoWidget_->setFullScreen(true);
+        videoWidget_->show();
+    }
+
+    mediaPlayer_->setVideoOutput(videoWidget_);
     mediaPlayer_->setMedia(QMediaContent(), &videoBuffer_);
     mediaPlayer_->play();
+    ui::HuEvents::notifyVideoStarted();
 }
 
 void QtVideoOutput::onStopPlayback()
 {
     videoWidget_->hide();
     mediaPlayer_->stop();
+    ui::HuEvents::notifyVideoStopped();
 }
 
 }
