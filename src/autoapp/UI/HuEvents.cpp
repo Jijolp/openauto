@@ -1,6 +1,6 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2a: HuEvents bus implementation. See header for the contract.)
+*  (UI-2b: HuEvents bus implementation. See header for the contract.)
 */
 
 #include <QWidget>
@@ -17,6 +17,8 @@ namespace ui
 
 QWidget* HuEvents::videoHost_ = nullptr;
 std::atomic<bool> HuEvents::aaPageActive_{false};
+std::atomic<bool> HuEvents::splashActive_{false};
+std::atomic<bool> HuEvents::screenOffActive_{false};
 
 HuEvents::HuEvents()
     : QObject(nullptr)
@@ -32,6 +34,16 @@ HuEvents& HuEvents::instance()
 void HuEvents::notifyNightMode(bool on)
 {
     emit instance().nightModeChanged(on);
+}
+
+void HuEvents::notifyTempExt(int tempC)
+{
+    emit instance().tempExtChanged(tempC);
+}
+
+void HuEvents::notifyIgnition(bool on)
+{
+    emit instance().ignitionChanged(on);
 }
 
 void HuEvents::notifyVideoStarted()
@@ -72,6 +84,26 @@ void HuEvents::setAaPageActive(bool active)
 bool HuEvents::isAaPageActive()
 {
     return aaPageActive_.load();
+}
+
+void HuEvents::setSplashActive(bool active)
+{
+    splashActive_.store(active);
+}
+
+bool HuEvents::isSplashActive()
+{
+    return splashActive_.load();
+}
+
+void HuEvents::setScreenOffActive(bool active)
+{
+    screenOffActive_.store(active);
+}
+
+bool HuEvents::isScreenOffActive()
+{
+    return screenOffActive_.load();
 }
 
 }

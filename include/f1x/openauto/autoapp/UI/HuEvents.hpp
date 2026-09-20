@@ -1,18 +1,14 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2a: single-window event bus. Decouples the AA backend threads from
-*  the UI without touching any protocol/service logic:
-*   - night_mode: CanBridge worker thread notifies, MainWindow consumes
-*     (one-way, read-only for the services).
-*   - videoStarted/videoStopped: QtVideoOutput notifies, MainWindow
-*     switches stack pages (navigation = show/hide, session untouched).
-*   - video host registry: the AA stack page where QtVideoOutput embeds
-*     its QVideoWidget (replaces the former separate fullscreen window).
-*   - aaPageActive: set by MainWindow on navigation; lets InputDevice
-*     forward touch/keys to the phone ONLY while the AA page is shown
-*     (other pages stay fully clickable during a session).
-*  Emitting from worker threads is safe: receivers live in the GUI
-*  thread, Qt::AutoConnection delivers queued across threads.)
+*  (UI-2b: single-window event bus. Decouples AA backend threads from the
+*  UI without touching any protocol/service logic: see 2a header plus
+*   - temp_ext: CanBridge stub → StatusBar (placeholder "--°" on PC, real
+*     W203 outside temp later without touching the UI).
+*   - ignition_off: CanBridge → ScreenOffOverlay (1 line synergy).
+*   - splashActive / screenOffActive atomic flags read by InputDevice to
+*     shield touches (first tap consumed).
+*  Emitting from worker threads is safe: receivers live in GUI thread,
+*  Qt::AutoConnection delivers queued across threads.)
 */
 
 #pragma once
@@ -40,6 +36,8 @@ public:
 
     // --- one-way notifications (emit = fire and forget) ---
     static void notifyNightMode(bool on);
+    static void notifyTempExt(int tempC);
+    static void notifyIgnition(bool on);
     static void notifyVideoStarted();
     static void notifyVideoStopped();
 
@@ -53,8 +51,16 @@ public:
     static void setAaPageActive(bool active);
     static bool isAaPageActive();
 
+    // --- full-window shields (written by MainWindow, read by InputDevice) ---
+    static void setSplashActive(bool active);
+    static bool isSplashActive();
+    static void setScreenOffActive(bool active);
+    static bool isScreenOffActive();
+
 signals:
     void nightModeChanged(bool on);
+    void tempExtChanged(int tempC);
+    void ignitionChanged(bool on);
     void videoStarted();
     void videoStopped();
 
@@ -63,6 +69,8 @@ private:
 
     static QWidget* videoHost_;
     static std::atomic<bool> aaPageActive_;
+    static std::atomic<bool> splashActive_;
+    static std::atomic<bool> screenOffActive_;
 };
 
 }
