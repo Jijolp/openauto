@@ -99,11 +99,9 @@ void InputSourceService::onChannelOpenRequest(const aasdk::proto::messages::Chan
     aasdk::proto::messages::ChannelOpenResponse response;
     response.set_status(status);
 
-    // S3 diagnostic: subscribe at OPEN, not only at key binding. Some phones
-    // (Nothing A063) open the channel without ever sending KeyBindingRequest;
-    // without this, touch reports would never reach the new channel and the
-    // C3 test could not exercise it. Revisit once S3 gives evidence.
-    inputDevice_->start(*this);
+    // S3 verified: the phone binds (KeyBindingRequest) ~ms after open, so
+    // subscription stays binding-gated like the reference (subscribe-on-open
+    // was a diagnostic step, reverted after the fix was proven elsewhere).
 
     auto promise = aasdk::channel::SendPromise::defer(strand_);
     promise->then([]() {}, std::bind(&InputSourceService::onChannelError, this->shared_from_this(), std::placeholders::_1));
