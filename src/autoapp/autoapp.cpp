@@ -155,7 +155,10 @@ int main(int argc, char* argv[])
         qApplication.setOverrideCursor(Qt::BlankCursor);
     }
     QObject::connect(&mainWindow, &autoapp::ui::MainWindow::toggleCursor, [&qApplication]() {
-        const auto cursor = qApplication.overrideCursor()->shape() == Qt::BlankCursor ? Qt::ArrowCursor : Qt::BlankCursor;
+        // FIX UI-2b cursor: overrideCursor() is null when no override was
+        // ever set (windowed dev) — dereferencing it segfaulted the toggle.
+        const QCursor* current = qApplication.overrideCursor();
+        const auto cursor = (current != nullptr && current->shape() == Qt::BlankCursor) ? Qt::ArrowCursor : Qt::BlankCursor;
         qApplication.setOverrideCursor(cursor);
     });
 
