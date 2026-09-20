@@ -31,7 +31,7 @@ add_definitions(-DBOOST_ALL_DYN_LINK)
 
 find_package(Boost REQUIRED COMPONENTS system log OPTIONAL_COMPONENTS unit_test_framework)
 find_package(libusb-1.0 REQUIRED)
-find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth)
+find_package(Qt5 COMPONENTS Multimedia MultimediaWidgets Bluetooth Svg)
 find_package(Protobuf REQUIRED)
 # Legacy FindProtobuf module only yields -lprotobuf, but protobuf 36 needs
 # its Abseil closure at link time ("DSO missing from command line").
@@ -86,6 +86,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
                     ${Qt5MultimediaWidgets_INCLUDE_DIRS}
                     ${Qt5Widgets_INCLUDE_DIRS}
                     ${Qt5Bluetooth_INCLUDE_DIRS}
+                    ${Qt5Svg_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
                     ${LIBUSB_1_INCLUDE_DIRS}
                     ${PROTOBUF_INCLUDE_DIR}
@@ -124,6 +125,7 @@ target_link_libraries(autoapp
                         ${Qt5Multimedia_LIBRARIES}
                         ${Qt5MultimediaWidgets_LIBRARIES}
                         ${Qt5Bluetooth_LIBRARIES}
+                        ${Qt5Svg_LIBRARIES}
                         ${LIBUSB_1_LIBRARIES}
                         ${PROTOBUF_LIBRARIES}
                         ${BCM_HOST_LIBRARIES}

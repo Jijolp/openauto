@@ -1,11 +1,14 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2b: Mercedes star painter.)
+*  (UI-2b fix: human SVG via QSvgRenderer, QPainter fallback.)
 */
 
 #include <QtMath>
+#include <QCoreApplication>
+#include <QFile>
 #include <QPainter>
 #include <QPainterPath>
+#include <QSvgRenderer>
 #include <f1x/openauto/autoapp/UI/MercedesLogo.hpp>
 
 namespace f1x
@@ -22,16 +25,30 @@ MercedesLogo::MercedesLogo(QWidget* parent, int baseSize)
     , color_(QColor(0xC8, 0xC8, 0xCC))
     , scale_(1.0)
     , baseSize_(baseSize)
+    , active_(false)
 {
     this->setFixedSize(baseSize_, baseSize_);
     this->setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    this->reloadSvg();
 }
+
+// Defined here (not inline): QSvgRenderer is complete only in this TU,
+// std::unique_ptr needs it at destruction.
+MercedesLogo::~MercedesLogo() = default;
 
 void MercedesLogo::setColor(const QColor& c)
 {
     if(color_ != c)
     {
         color_ = c;
+        // A clearly red tint selects the red SVG variant (keeps the
+        // existing callers working unchanged); otherwise grey.
+        const bool red = (c.red() >= 0xC0 && c.red() > c.green() + 0x40 && c.red() > c.blue() + 0x40);
+        if(red != active_)
+        {
+            active_ = red;
+            this->reloadSvg();
+        }
         this->update();
     }
 }
@@ -39,6 +56,21 @@ void MercedesLogo::setColor(const QColor& c)
 QColor MercedesLogo::color() const
 {
     return color_;
+}
+
+void MercedesLogo::setActive(bool active)
+{
+    if(active_ != active)
+    {
+        active_ = active;
+        this->reloadSvg();
+        this->update();
+    }
+}
+
+bool MercedesLogo::isActive() const
+{
+    return active_;
 }
 
 void MercedesLogo::setScaleFactor(qreal s)
@@ -55,6 +87,25 @@ qreal MercedesLogo::scaleFactor() const
     return scale_;
 }
 
+void MercedesLogo::reloadSvg()
+{
+    const QString fileName = active_ ? QStringLiteral("/../assets/mercedes-red.svg")
+                                     : QStringLiteral("/../assets/mercedes.svg");
+    const QString path = QCoreApplication::applicationDirPath() + fileName;
+    if(QFile::exists(path))
+    {
+        renderer_ = std::make_unique<QSvgRenderer>(path, this);
+        if(!renderer_->isValid())
+        {
+            renderer_.reset();
+        }
+    }
+    else
+    {
+        renderer_.reset();
+    }
+}
+
 void MercedesLogo::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
@@ -69,8 +120,21 @@ void MercedesLogo::paintEvent(QPaintEvent*)
     p.scale(scale_, scale_);
     p.translate(-cx, -cy);
 
-    // Geometry in 100×100 viewBox logic scaled to widget size.
+    if(renderer_ != nullptr)
+    {
+        // Vector re-render at widget size — crisp at 26/120/180 alike,
+        // never a scaled bitmap.
+        renderer_->render(&p, QRectF(0.0, 0.0, w, h));
+        return;
+    }
+
+    // Fallback (no asset files): geometric star, same spirit.
     const qreal size = qMin(w, h);
+    this->paintFallback(p, cx, cy, size);
+}
+
+void MercedesLogo::paintFallback(QPainter& p, qreal cx, qreal cy, qreal size)
+{
     const qreal strokeOuter = qMax(1.2, size * 0.016);
     const qreal strokeInner = qMax(1.0, size * 0.011);
     const qreal rOuter = size * 0.46;
