@@ -37,8 +37,17 @@ struct UiConstants
     static constexpr int HOME_GRID_SPACING = 16;
     static constexpr int QUADRANT_INNER_RADIUS = 70;
     static constexpr int QUADRANT_OUTER_RADIUS = 6;
-    static constexpr int QUADRANT_LABEL_FONT_SIZE = 13;
-    static constexpr int QUADRANT_BADGE_FONT_SIZE = 10;
+    // P3: quadrant labels sized for the surface (~32px @1024p, SemiBold),
+    // SOON badge small and discreet. QFont pixel sizes set in code.
+    static constexpr int QUADRANT_LABEL_FONT_SIZE = 32;
+    static constexpr int QUADRANT_LABEL_SPACING_PCT = 112;
+    static constexpr int QUADRANT_BADGE_FONT_SIZE = 11;
+    static constexpr int QUADRANT_BADGE_SPACING_PCT = 160;
+    static constexpr int QUADRANT_BADGE_MARGIN = 14;
+
+    // Settings page local bandeau (same back-logo pattern as the AA page).
+    static constexpr int SETTINGS_BACK_BUTTON_SIZE = 48;
+    static constexpr int SETTINGS_BACK_ICON_SIZE = 26;
 
     // Central Mercedes logo (human SVG via QSvgRenderer, QPainter fallback).
     static constexpr int LOGO_HOME_SIZE = 180;

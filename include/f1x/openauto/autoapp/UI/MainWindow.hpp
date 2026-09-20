@@ -40,7 +40,10 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
+    // embeddedSettings: the existing OpenAuto SettingsWindow, reparented
+    // into the settings stack page (P2 — real config, never a dead-end).
+    // Null keeps the legacy placeholder (unit contexts).
+    explicit MainWindow(QWidget* embeddedSettings = nullptr, QWidget *parent = nullptr);
     ~MainWindow() override;
 
     void showHomePage();
@@ -69,6 +72,7 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     enum Page : int
@@ -84,6 +88,9 @@ private:
     QWidget* buildSettingsPage();
     void animateQuadrantsIn();
     void positionCenterLogo();
+    void positionBadges();
+    void positionBadge(QPushButton* button, QLabel* badge);
+    static QPushButton* makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName);
 
     StatusBar* statusBar_;
     QStackedWidget* stack_;
@@ -100,9 +107,14 @@ private:
     QPushButton* quadrantRace_;
     QPushButton* quadrantCar_;
     QPushButton* quadrantParams_;
+    QLabel* raceBadge_;
+    QLabel* carBadge_;
     QWidget* centerHit_;
     MercedesLogo* centerLogo_;
     std::vector<QGraphicsOpacityEffect*> quadrantEffects_;
+
+    // P2: existing OpenAuto config embedded in the settings page.
+    QWidget* embeddedSettings_;
 
     // Misc
     QPushButton* nightButton_;

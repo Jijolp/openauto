@@ -25,6 +25,8 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QGridLayout>
+#include <QScrollArea>
+#include <QFrame>
 #include <f1x/openauto/autoapp/UI/HuEvents.hpp>
 #include <f1x/openauto/autoapp/UI/MainWindow.hpp>
 #include <f1x/openauto/autoapp/UI/MercedesLogo.hpp>
@@ -71,14 +73,32 @@ QPushButton* makeQuadrant(const QString& text, const QString& objName, bool enab
     // FIX UI-2b layout: quadrants must fill their grid cells (were thin
     // bars — default policies never took the stretched space).
     btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    // Uppercase + letter-spacing handled in QSS via font + letter-spacing.
-    // Keep text uppercase in code.
+    // P3: label type sized for the surface in code (UiConstants) — QSS
+    // keeps colors/borders/padding only. Uppercase text in code.
+    QFont labelFont(QStringLiteral("Inter"));
+    labelFont.setPixelSize(UiConstants::QUADRANT_LABEL_FONT_SIZE);
+    labelFont.setWeight(QFont::DemiBold);
+    labelFont.setLetterSpacing(QFont::PercentageSpacing, UiConstants::QUADRANT_LABEL_SPACING_PCT);
+    btn->setFont(labelFont);
     return btn;
 }
 
+QLabel* makeBadge(const QString& text)
+{
+    auto* badge = new QLabel(text);
+    badge->setObjectName(QStringLiteral("soonBadge"));
+    badge->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    QFont badgeFont(QStringLiteral("Inter"));
+    badgeFont.setPixelSize(UiConstants::QUADRANT_BADGE_FONT_SIZE);
+    badgeFont.setWeight(QFont::Normal);
+    badgeFont.setLetterSpacing(QFont::PercentageSpacing, UiConstants::QUADRANT_BADGE_SPACING_PCT);
+    badge->setFont(badgeFont);
+    return badge;
 }
 
-MainWindow::MainWindow(QWidget *parent)
+}
+
+MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     : QMainWindow(parent)
     , statusBar_(new StatusBar(this))
     , stack_(new QStackedWidget(this))
@@ -93,8 +113,12 @@ MainWindow::MainWindow(QWidget *parent)
     , quadrantRace_(nullptr)
     , quadrantCar_(nullptr)
     , quadrantParams_(nullptr)
+    , raceBadge_(nullptr)
+    , carBadge_(nullptr)
     , centerHit_(nullptr)
     , centerLogo_(nullptr)
+    , quadrantEffects_()
+    , embeddedSettings_(embeddedSettings)
     , nightButton_(nullptr)
     , night_(false)
     , splashActive_(false)
@@ -207,6 +231,12 @@ void MainWindow::showAAPage()
 
 void MainWindow::showSettingsPage()
 {
+    // P2: the embedded config hides itself on Save/Cancel (close()) —
+    // re-show it on every visit so the page is never an empty hole.
+    if(embeddedSettings_ != nullptr && !embeddedSettings_->isVisible())
+    {
+        embeddedSettings_->show();
+    }
     stack_->setCurrentIndex(SETTINGS_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
@@ -371,10 +401,12 @@ QWidget* MainWindow::buildHomePage()
 {
     auto* page = new QWidget(this);
     page->setObjectName(QStringLiteral("homePage"));
+    // P1: pages must take all viewport space (StackAll keeps siblings live).
+    page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     auto* outer = new QVBoxLayout(page);
     outer->setContentsMargins(UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN,
-                              UiConstants::HOME_OUTER_MARGIN, 8);
+                              UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
     outer->setSpacing(8);
 
     auto* gridContainer = new QWidget(page);
@@ -385,9 +417,19 @@ QWidget* MainWindow::buildHomePage()
     grid->setSpacing(UiConstants::HOME_GRID_SPACING);
 
     quadrantAA_ = makeQuadrant(QStringLiteral("ANDROID AUTO"), QStringLiteral("quadrantAA"), true);
-    quadrantRace_ = makeQuadrant(QStringLiteral("MODE RACE\nSOON"), QStringLiteral("quadrantRace"), false);
-    quadrantCar_ = makeQuadrant(QStringLiteral("VOITURE\nSOON"), QStringLiteral("quadrantCar"), false);
+    quadrantRace_ = makeQuadrant(QStringLiteral("MODE RACE"), QStringLiteral("quadrantRace"), false);
+    quadrantCar_ = makeQuadrant(QStringLiteral("VOITURE"), QStringLiteral("quadrantCar"), false);
     quadrantParams_ = makeQuadrant(QStringLiteral("PARAMÈTRES"), QStringLiteral("quadrantParams"), true);
+
+    // P3: SOON badges are separate small labels (not button text) so they
+    // stay small and discreet next to the 32px labels. Children of the
+    // buttons, repositioned on resize via eventFilter.
+    raceBadge_ = makeBadge(QStringLiteral("SOON"));
+    raceBadge_->setParent(quadrantRace_);
+    carBadge_ = makeBadge(QStringLiteral("SOON"));
+    carBadge_->setParent(quadrantCar_);
+    quadrantRace_->installEventFilter(this);
+    quadrantCar_->installEventFilter(this);
 
     // Inner corner hugging the central logo (70px) — see theme.qss per-id radii.
     quadrantAA_->setProperty("innerCorner", QStringLiteral("bottomRight"));
@@ -447,7 +489,8 @@ QWidget* MainWindow::buildHomePage()
     centerBtn->setFixedSize(UiConstants::LOGO_HOME_SIZE, UiConstants::LOGO_HOME_SIZE);
     centerBtn->setFlat(true);
     centerBtn->setCursor(Qt::PointingHandCursor);
-    centerBtn->setStyleSheet(QStringLiteral("QPushButton#centerLogoButton { background: transparent; border: none; }"));
+    // P1bis: no inline transparent background — QSS #centerLogoButton paints
+    // the medallion fully opaque (nothing must leak the compositor behind).
     centerLogo_ = new MercedesLogo(centerBtn, UiConstants::LOGO_HOME_SIZE);
     centerLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     centerLogo_->move(0, 0);
@@ -491,6 +534,7 @@ QWidget* MainWindow::buildAAPage()
 {
     aaPage_ = new QWidget(this);
     aaPage_->setObjectName(QStringLiteral("aaPage"));
+    aaPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto* layout = new QVBoxLayout(aaPage_);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -506,24 +550,71 @@ QWidget* MainWindow::buildSettingsPage()
 {
     settingsPage_ = new QWidget(this);
     settingsPage_->setObjectName(QStringLiteral("settingsPage"));
+    settingsPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto* layout = new QVBoxLayout(settingsPage_);
-    layout->addStretch();
-    layout->addWidget(makeTitle(QStringLiteral("PARAMÈTRES")));
-    layout->addWidget(makeSubtitle(QStringLiteral("Squelette UI-2b — fonds Nothing/Mercedes, quadrants en place.")));
-    layout->addStretch();
+    layout->setContentsMargins(UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
+    layout->setSpacing(8);
 
-    auto* advancedButton = new QPushButton(QStringLiteral("Réglages avancés… (S)"), settingsPage_);
-    connect(advancedButton, &QPushButton::clicked, this, &MainWindow::openSettings);
-    auto* row = new QHBoxLayout();
-    row->addStretch();
-    row->addWidget(advancedButton);
-    row->addStretch();
-    layout->addLayout(row);
-    layout->addStretch();
-    auto* hint = makeSubtitle(QStringLiteral("Tap logo central de l'accueil → écran éteint"));
-    layout->addWidget(hint);
-    layout->addStretch();
+    // P2: local bandeau — same back-logo pattern as the AA page, so this
+    // page is never a dead-end. Title + back button share one row.
+    auto* bandeau = new QWidget(settingsPage_);
+    bandeau->setObjectName(QStringLiteral("settingsBandeau"));
+    auto* bandLayout = new QHBoxLayout(bandeau);
+    bandLayout->setContentsMargins(0, 0, 0, 0);
+    bandLayout->setSpacing(12);
+    auto* title = makeTitle(QStringLiteral("PARAMÈTRES"));
+    title->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    bandLayout->addWidget(title, 1);
+    auto* backBtn = makeLogoBackButton(bandeau, UiConstants::SETTINGS_BACK_BUTTON_SIZE,
+                                       UiConstants::SETTINGS_BACK_ICON_SIZE, "settingsBackButton");
+    connect(backBtn, &QPushButton::clicked, this, &MainWindow::showHomePage);
+    bandLayout->addWidget(backBtn);
+    layout->addWidget(bandeau);
+
+    if(embeddedSettings_ != nullptr)
+    {
+        // P2: reveal the EXISTING OpenAuto config (tabs general/video/audio/
+        // input + Save/Cancel) inside a scroll area — no logic duplicated.
+        // Save/Cancel call close() which only hides the widget; navigating
+        // back here re-shows it (see showSettingsPage), so no dead-end.
+        embeddedSettings_->setParent(settingsPage_);
+        embeddedSettings_->setWindowFlags(Qt::Widget);
+        auto* scroll = new QScrollArea(settingsPage_);
+        scroll->setObjectName(QStringLiteral("settingsScroll"));
+        scroll->setWidgetResizable(true);
+        scroll->setFrameShape(QFrame::NoFrame);
+        scroll->setWidget(embeddedSettings_);
+        layout->addWidget(scroll, 1);
+    }
+    else
+    {
+        // Fallback (no embedded config): minimal content + S shortcut.
+        layout->addWidget(makeSubtitle(QStringLiteral("Réglages avancés (S) — configuration OpenAuto d'origine.")));
+        auto* advancedButton = new QPushButton(QStringLiteral("Réglages avancés… (S)"), settingsPage_);
+        connect(advancedButton, &QPushButton::clicked, this, &MainWindow::openSettings);
+        auto* row = new QHBoxLayout();
+        row->addStretch();
+        row->addWidget(advancedButton);
+        row->addStretch();
+        layout->addLayout(row);
+        layout->addStretch();
+    }
     return settingsPage_;
+}
+
+QPushButton* MainWindow::makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName)
+{
+    auto* btn = new QPushButton(parent);
+    btn->setObjectName(QString::fromLatin1(objName));
+    btn->setFixedSize(size, size);
+    btn->setFlat(true);
+    btn->setFocusPolicy(Qt::NoFocus);
+    btn->setCursor(Qt::PointingHandCursor);
+    auto* logo = new MercedesLogo(btn, iconSize);
+    logo->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    logo->move((size - iconSize) / 2, (size - iconSize) / 2);
+    return btn;
 }
 
 void MainWindow::animateQuadrantsIn()
@@ -550,6 +641,43 @@ void MainWindow::animateQuadrantsIn()
         anim->setEasingCurve(QEasingCurve::OutCubic);
         QTimer::singleShot(0, anim, [anim]() { anim->start(QAbstractAnimation::DeleteWhenStopped); });
     }
+}
+
+bool MainWindow::eventFilter(QObject* watched, QEvent* event)
+{
+    // P3: keep SOON badges glued to the top-right of their quadrant on
+    // every resize (they are children of the buttons).
+    if(event->type() == QEvent::Resize)
+    {
+        if(watched == quadrantRace_ && raceBadge_ != nullptr)
+        {
+            this->positionBadge(quadrantRace_, raceBadge_);
+        }
+        else if(watched == quadrantCar_ && carBadge_ != nullptr)
+        {
+            this->positionBadge(quadrantCar_, carBadge_);
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::positionBadges()
+{
+    this->positionBadge(quadrantRace_, raceBadge_);
+    this->positionBadge(quadrantCar_, carBadge_);
+}
+
+void MainWindow::positionBadge(QPushButton* button, QLabel* badge)
+{
+    if(button == nullptr || badge == nullptr)
+    {
+        return;
+    }
+    badge->adjustSize();
+    const int x = button->width() - badge->width() - UiConstants::QUADRANT_BADGE_MARGIN;
+    const int y = UiConstants::QUADRANT_BADGE_MARGIN;
+    badge->move(x, y);
+    badge->raise();
 }
 
 void MainWindow::positionCenterLogo()
