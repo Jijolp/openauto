@@ -113,6 +113,13 @@ void QtVideoOutput::onStartPlayback()
         videoWidget_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
         videoWidget_->show();
         videoWidget_->setFocus();
+        // FIX UI-2b video diag: log mapped state + geometry on every
+        // (re)show so a black/deformed return can be traced to the sink.
+        OPENAUTO_LOG(debug) << "[QtVideoOutput] shown, host=" << host->objectName().toStdString()
+                            << " geom=" << videoWidget_->geometry().x() << "," << videoWidget_->geometry().y()
+                            << "," << videoWidget_->geometry().width() << "x" << videoWidget_->geometry().height()
+                            << " visible=" << videoWidget_->isVisible()
+                            << " winId=" << static_cast<unsigned long long>(videoWidget_->winId());
     }
     else
     {
@@ -132,6 +139,7 @@ void QtVideoOutput::onStartPlayback()
 
 void QtVideoOutput::onStopPlayback()
 {
+    OPENAUTO_LOG(debug) << "[QtVideoOutput] stop, hiding widget.";
     videoWidget_->hide();
     mediaPlayer_->stop();
     ui::HuEvents::notifyVideoStopped();

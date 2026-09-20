@@ -20,6 +20,7 @@
 #include <QPropertyAnimation>
 #include <QPushButton>
 #include <QShortcut>
+#include <QStackedLayout>
 #include <QStackedWidget>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -67,6 +68,9 @@ QPushButton* makeQuadrant(const QString& text, const QString& objName, bool enab
     auto* btn = new QPushButton(text);
     btn->setObjectName(objName);
     btn->setEnabled(enabled);
+    // FIX UI-2b layout: quadrants must fill their grid cells (were thin
+    // bars — default policies never took the stretched space).
+    btn->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     // Uppercase + letter-spacing handled in QSS via font + letter-spacing.
     // Keep text uppercase in code.
     return btn;
@@ -79,6 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
     , statusBar_(new StatusBar(this))
     , stack_(new QStackedWidget(this))
     , homePage_(nullptr)
+    , gridContainer_(nullptr)
     , aaPage_(nullptr)
     , settingsPage_(nullptr)
     , aaPlaceholder_(nullptr)
@@ -101,6 +106,19 @@ MainWindow::MainWindow(QWidget *parent)
     layout->addWidget(statusBar_);
     layout->addWidget(stack_, 1);
     this->setCentralWidget(central);
+
+    // FIX UI-2b video: keep every page rendered at all times, stacked —
+    // the GStreamer sink behind QVideoWidget loses its overlay window on
+    // unmap (hide) and never re-acquires it on remap (show) → black or
+    // deformed frame on return. StackAll keeps the video window mapped
+    // under the opaque pages (home/settings cover it visually, capture
+    // all input as the top widgets). See BUILD_NOTES §24.
+    // (StackingMode lives on QStackedLayout; QStackedWidget's internal
+    // layout is one — documented relationship.)
+    if(auto* stackedLayout = qobject_cast<QStackedLayout*>(stack_->layout()))
+    {
+        stackedLayout->setStackingMode(QStackedLayout::StackAll);
+    }
 
     homePage_ = this->buildHomePage();
     aaPage_ = this->buildAAPage();
@@ -360,6 +378,8 @@ QWidget* MainWindow::buildHomePage()
     outer->setSpacing(8);
 
     auto* gridContainer = new QWidget(page);
+    gridContainer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    gridContainer_ = gridContainer;
     auto* grid = new QGridLayout(gridContainer);
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(UiConstants::HOME_GRID_SPACING);
@@ -433,6 +453,13 @@ QWidget* MainWindow::buildHomePage()
     centerLogo_->move(0, 0);
     centerHit_ = centerBtn;
     connect(centerBtn, &QPushButton::clicked, this, &MainWindow::showScreenOff);
+    // Red SVG variant while pressed (active state).
+    connect(centerBtn, &QPushButton::pressed, this, [this]() {
+        if(centerLogo_ != nullptr) { centerLogo_->setActive(true); }
+    });
+    connect(centerBtn, &QPushButton::released, this, [this]() {
+        if(centerLogo_ != nullptr) { centerLogo_->setActive(false); }
+    });
 
     // Dev strip (windowed hint + night toggle for quick test).
     auto* devRow = new QWidget(page);
@@ -527,16 +554,17 @@ void MainWindow::animateQuadrantsIn()
 
 void MainWindow::positionCenterLogo()
 {
-    if(homePage_ == nullptr || centerHit_ == nullptr)
+    if(homePage_ == nullptr || centerHit_ == nullptr || gridContainer_ == nullptr)
     {
         return;
     }
-    const QRect pageRect = homePage_->geometry();
-    // If page not yet laid out, use its size hint.
-    const int x = (pageRect.width() - centerHit_->width()) / 2;
-    const int y = (pageRect.height() - centerHit_->height()) / 2;
-    // Adjust for outer margins: grid container is inside outer layout with margins,
-    // but pageRect already includes them. Center of page is fine.
+    // FIX UI-2b layout: center on the GRID intersection (gridContainer is
+    // a child of the page, so its geometry is already in page coords),
+    // not on the page — the dev strip below would offset it otherwise.
+    // Robust to resize (e.g. 1920x1080): recomputed on every resizeEvent.
+    const QPoint gridCenter = gridContainer_->geometry().center();
+    const int x = gridCenter.x() - centerHit_->width() / 2;
+    const int y = gridCenter.y() - centerHit_->height() / 2;
     centerHit_->move(x, y);
     centerHit_->raise();
 }
