@@ -37,8 +37,9 @@ App::App(boost::asio::io_context& ioService, aasdk::usb::USBWrapper& usbWrapper,
     , strand_(ioService_)
     , androidAutoEntityFactory_(androidAutoEntityFactory)
     , usbHub_(std::move(usbHub))
-    , connectedAccessoriesEnumerator_(std::move(connectedAccessoriesEnumerator))
-    , isStopped_(false)
+     , connectedAccessoriesEnumerator_(std::move(connectedAccessoriesEnumerator))
+     , isStopped_(false)
+     , hubWaitArmed_(false)
 {
 
 }
@@ -49,6 +50,7 @@ void App::waitForUSBDevice()
         this->waitForDevice();
         this->enumerateDevices();
     });
+    OPENAUTO_LOG(debug) << "[App] waitForUSBDevice requested.";
 }
 
 void App::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket)
@@ -98,6 +100,7 @@ void App::stop()
 void App::aoapDeviceHandler(aasdk::usb::DeviceHandle deviceHandle)
 {
     OPENAUTO_LOG(info) << "[App] Device connected.";
+    hubWaitArmed_ = false;
 
     if(androidAutoEntity_ != nullptr)
     {
@@ -137,12 +140,22 @@ void App::enumerateDevices()
 
 void App::waitForDevice()
 {
+    // P0 (Error 30): never arm two hub waits — USBHub::start() rejects the
+    // pending promise with OPERATION_ABORTED when called twice (double quit
+    // → double wait). All callers run on the strand (promise handlers are
+    // strand-posted, other callers dispatch), so the flag needs no lock.
+    if(hubWaitArmed_)
+    {
+        OPENAUTO_LOG(warning) << "[App] hub wait already armed, skip duplicate.";
+        return;
+    }
     OPENAUTO_LOG(info) << "[App] Waiting for device...";
 
     auto promise = aasdk::usb::IUSBHub::Promise::defer(strand_);
     promise->then(std::bind(&App::aoapDeviceHandler, this->shared_from_this(), std::placeholders::_1),
                   std::bind(&App::onUSBHubError, this->shared_from_this(), std::placeholders::_1));
     usbHub_->start(std::move(promise));
+    hubWaitArmed_ = true;
 }
 
 void App::onAndroidAutoQuit()
@@ -167,9 +180,14 @@ void App::onAndroidAutoQuit()
 void App::onUSBHubError(const aasdk::error::Error& error)
 {
     OPENAUTO_LOG(error) << "[App] usb hub error: " << error.what();
+    hubWaitArmed_ = false;
 
-    if(error != aasdk::error::ErrorCode::OPERATION_ABORTED &&
-       error != aasdk::error::ErrorCode::OPERATION_IN_PROGRESS)
+    // P0 (Error 30 = OPERATION_ABORTED): the old code dropped the wait here
+    // and the app never re-armed the hub (bricked "Waiting", phone never
+    // connects). Re-arm whenever no session owns the hub — the
+    // hubWaitArmed_ guard above makes this converge (no start ping-pong):
+    // a newer wait would have set the flag and this path would not run.
+    if(!isStopped_ && androidAutoEntity_ == nullptr)
     {
         this->waitForDevice();
     }

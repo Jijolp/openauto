@@ -62,6 +62,11 @@ private:
     aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator_;
     service::IAndroidAutoEntity::Pointer androidAutoEntity_;
     bool isStopped_;
+    // P0 (Error 30): a hub wait is armed — set in waitForDevice, cleared
+    // on connect or hub error. Guards the double-quit double-start that
+    // made USBHub::start() reject the first promise with OPERATION_ABORTED.
+    // Strand-confined, no extra thread.
+    bool hubWaitArmed_;
 };
 
 }
