@@ -105,6 +105,12 @@ void QtVideoOutput::onStartPlayback()
         if(auto* box = qobject_cast<QVBoxLayout*>(host->layout()))
         {
             box->addWidget(videoWidget_);
+            // Belt-and-braces: the AA page layout also holds zero-stretch
+            // spacers + a hidden placeholder — force all extra space to
+            // the video so it always fills the page (rounded/inset content
+            // in the 21/09 capture must come from the phone render, never
+            // from a shy widget).
+            box->setStretchFactor(videoWidget_, 1);
         }
         else
         {

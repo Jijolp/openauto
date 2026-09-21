@@ -216,6 +216,12 @@ StatusBar {
     background-color: #000000;
 }
 
+/* AA page: opaque black so any letterbox around the phone render is pure
+ * black, never compositor bleed-through (cf. BUILD_NOTES §28). */
+#aaPage {
+    background-color: #000000;
+}
+
 QPushButton#quadrantAA,
 QPushButton#quadrantRace,
 QPushButton#quadrantCar,
