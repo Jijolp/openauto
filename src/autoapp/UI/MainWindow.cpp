@@ -83,19 +83,6 @@ QPushButton* makeQuadrant(const QString& text, const QString& objName, bool enab
     return btn;
 }
 
-QLabel* makeBadge(const QString& text)
-{
-    auto* badge = new QLabel(text);
-    badge->setObjectName(QStringLiteral("soonBadge"));
-    badge->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    QFont badgeFont(QStringLiteral("Inter"));
-    badgeFont.setPixelSize(UiConstants::QUADRANT_BADGE_FONT_SIZE);
-    badgeFont.setWeight(QFont::Normal);
-    badgeFont.setLetterSpacing(QFont::PercentageSpacing, UiConstants::QUADRANT_BADGE_SPACING_PCT);
-    badge->setFont(badgeFont);
-    return badge;
-}
-
 }
 
 MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
@@ -106,6 +93,8 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , gridContainer_(nullptr)
     , aaPage_(nullptr)
     , settingsPage_(nullptr)
+    , racePage_(nullptr)
+    , carPage_(nullptr)
     , aaPlaceholder_(nullptr)
     , splash_(new SplashOverlay(this))
     , screenOff_(new ScreenOffOverlay(this))
@@ -113,8 +102,6 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , quadrantRace_(nullptr)
     , quadrantCar_(nullptr)
     , quadrantParams_(nullptr)
-    , raceBadge_(nullptr)
-    , carBadge_(nullptr)
     , centerHit_(nullptr)
     , centerLogo_(nullptr)
     , quadrantEffects_()
@@ -127,9 +114,12 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     auto* layout = new QVBoxLayout(central);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    layout->addWidget(statusBar_);
+    // Item4: the stack takes the WHOLE window — the status bar floats
+    // above it as a click-transparent overlay (video is full-height,
+    // no longer squashed by a 40px layout row).
     layout->addWidget(stack_, 1);
     this->setCentralWidget(central);
+    statusBar_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
 
     // FIX UI-2b video: keep every page rendered at all times, stacked —
     // the GStreamer sink behind QVideoWidget loses its overlay window on
@@ -147,10 +137,15 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     homePage_ = this->buildHomePage();
     aaPage_ = this->buildAAPage();
     settingsPage_ = this->buildSettingsPage();
+    racePage_ = this->buildRacePage();
+    carPage_ = this->buildCarPage();
     stack_->addWidget(homePage_);      // HOME_PAGE = 0
     stack_->addWidget(aaPage_);        // AA_PAGE = 1
     stack_->addWidget(settingsPage_);  // SETTINGS_PAGE = 2
+    stack_->addWidget(racePage_);      // RACE_PAGE = 3
+    stack_->addWidget(carPage_);       // CAR_PAGE = 4
     stack_->setCurrentIndex(HOME_PAGE);
+    this->layoutStatusOverlay();
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
 
@@ -240,6 +235,33 @@ void MainWindow::showSettingsPage()
     stack_->setCurrentIndex(SETTINGS_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
+}
+
+void MainWindow::showRacePage()
+{
+    stack_->setCurrentIndex(RACE_PAGE);
+    HuEvents::setAaPageActive(false);
+    statusBar_->setAaMode(false);
+}
+
+void MainWindow::showCarPage()
+{
+    stack_->setCurrentIndex(CAR_PAGE);
+    HuEvents::setAaPageActive(false);
+    statusBar_->setAaMode(false);
+}
+
+void MainWindow::layoutStatusOverlay()
+{
+    // Item4: status bar floats over the full-window stack. Clicks pass
+    // through except on child widgets (the AA logo button stays clickable).
+    if(statusBar_ == nullptr || this->centralWidget() == nullptr)
+    {
+        return;
+    }
+    const int w = this->centralWidget()->width();
+    statusBar_->setGeometry(0, 0, w, UiConstants::STATUS_BAR_HEIGHT);
+    statusBar_->raise();
 }
 
 void MainWindow::setNightMode(bool on)
@@ -375,6 +397,7 @@ void MainWindow::hideScreenOff()
 void MainWindow::resizeEvent(QResizeEvent* event)
 {
     QMainWindow::resizeEvent(event);
+    this->layoutStatusOverlay();
     if(splash_ != nullptr && splash_->isVisible())
     {
         splash_->setGeometry(this->rect());
@@ -405,7 +428,9 @@ QWidget* MainWindow::buildHomePage()
     page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     auto* outer = new QVBoxLayout(page);
-    outer->setContentsMargins(UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN,
+    // Item4: top margin clears the floating status overlay.
+    outer->setContentsMargins(UiConstants::HOME_OUTER_MARGIN,
+                              UiConstants::STATUS_BAR_HEIGHT + UiConstants::HOME_OUTER_MARGIN,
                               UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
     outer->setSpacing(8);
 
@@ -417,27 +442,30 @@ QWidget* MainWindow::buildHomePage()
     grid->setSpacing(UiConstants::HOME_GRID_SPACING);
 
     quadrantAA_ = makeQuadrant(QStringLiteral("ANDROID AUTO"), QStringLiteral("quadrantAA"), true);
-    quadrantRace_ = makeQuadrant(QStringLiteral("MODE RACE"), QStringLiteral("quadrantRace"), false);
-    quadrantCar_ = makeQuadrant(QStringLiteral("VOITURE"), QStringLiteral("quadrantCar"), false);
+    quadrantRace_ = makeQuadrant(QStringLiteral("MODE RACE"), QStringLiteral("quadrantRace"), true);
+    quadrantCar_ = makeQuadrant(QStringLiteral("VOITURE"), QStringLiteral("quadrantCar"), true);
     quadrantParams_ = makeQuadrant(QStringLiteral("PARAMÈTRES"), QStringLiteral("quadrantParams"), true);
 
-    // P3: SOON badges are separate small labels (not button text) so they
-    // stay small and discreet next to the 32px labels. Children of the
-    // buttons, repositioned on resize via eventFilter.
-    raceBadge_ = makeBadge(QStringLiteral("SOON"));
-    raceBadge_->setParent(quadrantRace_);
-    carBadge_ = makeBadge(QStringLiteral("SOON"));
-    carBadge_->setParent(quadrantCar_);
-    quadrantRace_->installEventFilter(this);
-    quadrantCar_->installEventFilter(this);
-
-    // Inner corner hugging the central logo (70px) — see theme.qss per-id radii.
-    quadrantAA_->setProperty("innerCorner", QStringLiteral("bottomRight"));
-    quadrantRace_->setProperty("innerCorner", QStringLiteral("bottomLeft"));
-    quadrantCar_->setProperty("innerCorner", QStringLiteral("topRight"));
-    quadrantParams_->setProperty("innerCorner", QStringLiteral("topLeft"));
+    // Item1: inner cut radius clears the logo medallion plus a visible gap
+    // (LOGO_HOME_SIZE/2 + HOME_LOGO_GAP). Set inline per button so the value
+    // lives in UiConstants, not hardcoded in QSS (QSS keeps the 6px outers
+    // and all colors; inline wins only for the inner corner).
+    const int innerRadius = UiConstants::LOGO_HOME_SIZE / 2 + UiConstants::HOME_LOGO_GAP;
+    const struct { QPushButton* btn; const char* corner; } innerCorners[] = {
+        { quadrantAA_, "bottom-right" },
+        { quadrantRace_, "bottom-left" },
+        { quadrantCar_, "top-right" },
+        { quadrantParams_, "top-left" },
+    };
+    for(const auto& ic : innerCorners)
+    {
+        ic.btn->setStyleSheet(QStringLiteral("QPushButton#%1 { border-%2-radius: %3px; }")
+            .arg(ic.btn->objectName(), QString::fromLatin1(ic.corner), QString::number(innerRadius)));
+    }
 
     connect(quadrantAA_, &QPushButton::clicked, this, &MainWindow::showAAPage);
+    connect(quadrantRace_, &QPushButton::clicked, this, &MainWindow::showRacePage);
+    connect(quadrantCar_, &QPushButton::clicked, this, &MainWindow::showCarPage);
     connect(quadrantParams_, &QPushButton::clicked, this, &MainWindow::showSettingsPage);
 
     grid->addWidget(quadrantAA_, 0, 0);
@@ -468,7 +496,6 @@ QWidget* MainWindow::buildHomePage()
     centerLogo_ = new MercedesLogo(centerHit_, UiConstants::LOGO_HOME_SIZE);
     centerLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     centerLogo_->move(0, 0);
-    centerHit_->installEventFilter(this);
     // Capture click via eventFilter below, or use mousePress on centerHit.
     // Simpler: connect via lambda on mouse press using event filter override?
     // Install a direct handler: centerHit catches mousePress.
@@ -546,31 +573,44 @@ QWidget* MainWindow::buildAAPage()
     return aaPage_;
 }
 
+QWidget* MainWindow::buildPageBandeau(const QString& title, const char* backObjName)
+{
+    auto* bandeau = new QWidget();
+    bandeau->setObjectName(QStringLiteral("pageBandeau"));
+    auto* bandLayout = new QHBoxLayout(bandeau);
+    bandLayout->setContentsMargins(0, 0, 0, 0);
+    bandLayout->setSpacing(12);
+    auto* titleLabel = makeTitle(title);
+    titleLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
+    bandLayout->addWidget(titleLabel, 1);
+    auto* backBtn = makeLogoBackButton(bandeau, UiConstants::SETTINGS_BACK_BUTTON_SIZE,
+                                       UiConstants::SETTINGS_BACK_ICON_SIZE, backObjName);
+    connect(backBtn, &QPushButton::clicked, this, &MainWindow::showHomePage);
+    bandLayout->addWidget(backBtn);
+    return bandeau;
+}
+
 QWidget* MainWindow::buildSettingsPage()
 {
     settingsPage_ = new QWidget(this);
     settingsPage_->setObjectName(QStringLiteral("settingsPage"));
     settingsPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto* layout = new QVBoxLayout(settingsPage_);
-    layout->setContentsMargins(UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN,
+    // Item4: top margin clears the floating status overlay.
+    layout->setContentsMargins(UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::STATUS_BAR_HEIGHT + UiConstants::HOME_OUTER_MARGIN,
                                UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
     layout->setSpacing(8);
 
-    // P2: local bandeau — same back-logo pattern as the AA page, so this
-    // page is never a dead-end. Title + back button share one row.
-    auto* bandeau = new QWidget(settingsPage_);
-    bandeau->setObjectName(QStringLiteral("settingsBandeau"));
-    auto* bandLayout = new QHBoxLayout(bandeau);
-    bandLayout->setContentsMargins(0, 0, 0, 0);
-    bandLayout->setSpacing(12);
-    auto* title = makeTitle(QStringLiteral("PARAMÈTRES"));
-    title->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    bandLayout->addWidget(title, 1);
-    auto* backBtn = makeLogoBackButton(bandeau, UiConstants::SETTINGS_BACK_BUTTON_SIZE,
-                                       UiConstants::SETTINGS_BACK_ICON_SIZE, "settingsBackButton");
-    connect(backBtn, &QPushButton::clicked, this, &MainWindow::showHomePage);
-    bandLayout->addWidget(backBtn);
-    layout->addWidget(bandeau);
+    layout->addWidget(this->buildPageBandeau(QStringLiteral("PARAMÈTRES"), "settingsBackButton"));
+
+    // Item3: software version, so a human can check the running binary
+    // is the latest build (UiConstants::APP_VERSION + compile date).
+    auto* version = makeSubtitle(QStringLiteral("Version logicielle : v%1 (build %2)")
+        .arg(QString::fromLatin1(UiConstants::APP_VERSION),
+             QString::fromLatin1(__DATE__)));
+    version->setObjectName(QStringLiteral("versionLabel"));
+    layout->addWidget(version);
 
     if(embeddedSettings_ != nullptr)
     {
@@ -601,6 +641,40 @@ QWidget* MainWindow::buildSettingsPage()
         layout->addStretch();
     }
     return settingsPage_;
+}
+
+QWidget* MainWindow::buildRacePage()
+{
+    racePage_ = new QWidget(this);
+    racePage_->setObjectName(QStringLiteral("racePage"));
+    racePage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto* layout = new QVBoxLayout(racePage_);
+    layout->setContentsMargins(UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::STATUS_BAR_HEIGHT + UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
+    layout->setSpacing(8);
+    layout->addWidget(this->buildPageBandeau(QStringLiteral("MODE RACE"), "raceBackButton"));
+    layout->addStretch();
+    layout->addWidget(makeSubtitle(QStringLiteral("EN CONSTRUCTION — télémétrie à venir.")));
+    layout->addStretch();
+    return racePage_;
+}
+
+QWidget* MainWindow::buildCarPage()
+{
+    carPage_ = new QWidget(this);
+    carPage_->setObjectName(QStringLiteral("carPage"));
+    carPage_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto* layout = new QVBoxLayout(carPage_);
+    layout->setContentsMargins(UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::STATUS_BAR_HEIGHT + UiConstants::HOME_OUTER_MARGIN,
+                               UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
+    layout->setSpacing(8);
+    layout->addWidget(this->buildPageBandeau(QStringLiteral("VOITURE"), "carBackButton"));
+    layout->addStretch();
+    layout->addWidget(makeSubtitle(QStringLiteral("EN CONSTRUCTION — réglages véhicule à venir.")));
+    layout->addStretch();
+    return carPage_;
 }
 
 QPushButton* MainWindow::makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName)
@@ -641,43 +715,6 @@ void MainWindow::animateQuadrantsIn()
         anim->setEasingCurve(QEasingCurve::OutCubic);
         QTimer::singleShot(0, anim, [anim]() { anim->start(QAbstractAnimation::DeleteWhenStopped); });
     }
-}
-
-bool MainWindow::eventFilter(QObject* watched, QEvent* event)
-{
-    // P3: keep SOON badges glued to the top-right of their quadrant on
-    // every resize (they are children of the buttons).
-    if(event->type() == QEvent::Resize)
-    {
-        if(watched == quadrantRace_ && raceBadge_ != nullptr)
-        {
-            this->positionBadge(quadrantRace_, raceBadge_);
-        }
-        else if(watched == quadrantCar_ && carBadge_ != nullptr)
-        {
-            this->positionBadge(quadrantCar_, carBadge_);
-        }
-    }
-    return QMainWindow::eventFilter(watched, event);
-}
-
-void MainWindow::positionBadges()
-{
-    this->positionBadge(quadrantRace_, raceBadge_);
-    this->positionBadge(quadrantCar_, carBadge_);
-}
-
-void MainWindow::positionBadge(QPushButton* button, QLabel* badge)
-{
-    if(button == nullptr || badge == nullptr)
-    {
-        return;
-    }
-    badge->adjustSize();
-    const int x = button->width() - badge->width() - UiConstants::QUADRANT_BADGE_MARGIN;
-    const int y = UiConstants::QUADRANT_BADGE_MARGIN;
-    badge->move(x, y);
-    badge->raise();
 }
 
 void MainWindow::positionCenterLogo()

@@ -117,10 +117,15 @@ int main(int argc, char* argv[])
         }
     }
 
-    // UI-2a single window: status band + [Home|AA|Settings] stack inside
-    // MainWindow (theme loaded there, incl. night variant). No separate
-    // top-level windows anymore (video embeds into the AA page).
-    autoapp::ui::MainWindow mainWindow;
+    auto configuration = std::make_shared<autoapp::configuration::Configuration>();
+    autoapp::ui::SettingsWindow settingsWindow(configuration);
+
+    // UI-2a single window: status overlay + [Home|AA|Settings|Race|Car]
+    // stack inside MainWindow (theme loaded there, incl. night variant).
+    // No separate top-level windows anymore (video embeds into the AA page).
+    // Item3: the real SettingsWindow is embedded in the settings stack page
+    // (reparented by MainWindow), so the page shows the actual config.
+    autoapp::ui::MainWindow mainWindow(&settingsWindow);
     // Head-unit target: frameless fullscreen. OPENAUTO_WINDOWED=1 keeps a
     // fixed window for development on PC (see UiConstants).
     const bool windowed = qEnvironmentVariableIsSet("OPENAUTO_WINDOWED");
@@ -134,10 +139,6 @@ int main(int argc, char* argv[])
         mainWindow.setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     }
 
-    auto configuration = std::make_shared<autoapp::configuration::Configuration>();
-    autoapp::ui::SettingsWindow settingsWindow(configuration);
-    settingsWindow.setWindowFlags(Qt::WindowStaysOnTopHint);
-
     autoapp::configuration::RecentAddressesList recentAddressesList(7);
     recentAddressesList.read();
 
@@ -146,7 +147,7 @@ int main(int argc, char* argv[])
     connectDialog.setWindowFlags(Qt::WindowStaysOnTopHint);
 
     QObject::connect(&mainWindow, &autoapp::ui::MainWindow::exit, []() { std::exit(0); });
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &settingsWindow, &autoapp::ui::SettingsWindow::showFullScreen);
+    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openSettings, &mainWindow, &autoapp::ui::MainWindow::showSettingsPage);
     QObject::connect(&mainWindow, &autoapp::ui::MainWindow::openConnectDialog, &connectDialog, &autoapp::ui::ConnectDialog::exec);
 
     // Blank cursor is a head-unit behavior; keep the cursor visible in

@@ -49,6 +49,8 @@ public:
     void showHomePage();
     void showAAPage();
     void showSettingsPage();
+    void showRacePage();
+    void showCarPage();
 
 signals:
     void exit();
@@ -72,24 +74,29 @@ private slots:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
-    bool eventFilter(QObject* watched, QEvent* event) override;
 
 private:
     enum Page : int
     {
         HOME_PAGE = 0,
         AA_PAGE = 1,
-        SETTINGS_PAGE = 2
+        SETTINGS_PAGE = 2,
+        RACE_PAGE = 3,
+        CAR_PAGE = 4
     };
 
     void applyTheme() const;
     QWidget* buildHomePage();
     QWidget* buildAAPage();
     QWidget* buildSettingsPage();
+    QWidget* buildRacePage();
+    QWidget* buildCarPage();
+    // Shared page bandeau: left title + right logo back button → home.
+    // (Item4: pages start below the floating status overlay.)
+    QWidget* buildPageBandeau(const QString& title, const char* backObjName);
     void animateQuadrantsIn();
     void positionCenterLogo();
-    void positionBadges();
-    void positionBadge(QPushButton* button, QLabel* badge);
+    void layoutStatusOverlay();
     static QPushButton* makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName);
 
     StatusBar* statusBar_;
@@ -98,6 +105,8 @@ private:
     QWidget* gridContainer_;
     QWidget* aaPage_;
     QWidget* settingsPage_;
+    QWidget* racePage_;
+    QWidget* carPage_;
     QLabel* aaPlaceholder_;
     SplashOverlay* splash_;
     ScreenOffOverlay* screenOff_;
@@ -107,8 +116,6 @@ private:
     QPushButton* quadrantRace_;
     QPushButton* quadrantCar_;
     QPushButton* quadrantParams_;
-    QLabel* raceBadge_;
-    QLabel* carBadge_;
     QWidget* centerHit_;
     MercedesLogo* centerLogo_;
     std::vector<QGraphicsOpacityEffect*> quadrantEffects_;

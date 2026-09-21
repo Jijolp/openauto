@@ -18,6 +18,10 @@ namespace ui
 
 struct UiConstants
 {
+    // Displayed in Paramètres → "Version logicielle". Bump per release so
+    // a human can check the running binary is the latest build.
+    static constexpr const char* APP_VERSION = "0.9.0-ui2b";
+
     // Dev windowed geometry (OPENAUTO_WINDOWED=1), target head-unit 1024x600.
     static constexpr int WINDOWED_WIDTH = 1024;
     static constexpr int WINDOWED_HEIGHT = 600;
@@ -35,7 +39,10 @@ struct UiConstants
     // --- UI-2b: home quadrants around central logo ---
     static constexpr int HOME_OUTER_MARGIN = 16;
     static constexpr int HOME_GRID_SPACING = 16;
-    static constexpr int QUADRANT_INNER_RADIUS = 70;
+    // Visible gap between the quadrant inner edges and the logo medallion.
+    // The inner cut radius is derived: LOGO_HOME_SIZE/2 + HOME_LOGO_GAP
+    // (180/2+20 = 110), set per-button in code so QSS never hardcodes it.
+    static constexpr int HOME_LOGO_GAP = 20;
     static constexpr int QUADRANT_OUTER_RADIUS = 6;
     // P3: quadrant labels sized for the surface (~32px @1024p, SemiBold),
     // SOON badge small and discreet. QFont pixel sizes set in code.
