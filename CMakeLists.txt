@@ -78,7 +78,9 @@ endif()
 # useless without a car. Re-enable with -DOPENAUTO_ENABLE_CAN=ON.
 option(OPENAUTO_ENABLE_CAN "Build with CAN bridge support (socketcan)" OFF)
 if(OPENAUTO_ENABLE_CAN)
-    add_definitions(-DUSE_CAN)
+    add_definitions(-DUSE_CAN=1)
+else()
+    add_definitions(-DUSE_CAN=0)
 endif()
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
@@ -112,11 +114,7 @@ if(NOT OPENAUTO_ENABLE_BLUETOOTH)
         ${autoapp_include_directory}/Projection/LocalBluetoothDevice.hpp)
 endif()
 
-if(NOT OPENAUTO_ENABLE_CAN)
-    list(REMOVE_ITEM autoapp_source_files
-        ${autoapp_sources_directory}/Projection/CanBridge.cpp
-        ${autoapp_include_directory}/Projection/CanBridge.hpp)
-endif()
+# CanBridge is always compiled (needed for types), but is a no-op when USE_CAN is OFF
 
 add_executable(autoapp ${autoapp_source_files})
 
