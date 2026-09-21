@@ -25,9 +25,6 @@
 #include <f1x/openauto/autoapp/Service/InputBindingState.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDevice.hpp>
 #include <f1x/openauto/autoapp/Projection/IInputDeviceEventHandler.hpp>
-#ifdef USE_CAN
-#include <f1x/openauto/autoapp/Projection/CanBridge.hpp>
-#endif
 
 namespace f1x
 {
@@ -56,10 +53,6 @@ public:
     void onButtonEvent(const projection::ButtonEvent& event) override;
     void onTouchEvent(const projection::TouchEvent& event) override;
 
-#ifdef USE_CAN
-    projection::CanBridge::Pointer getCanBridge() { return canBridge_; }
-#endif
-
 private:
     using std::enable_shared_from_this<InputService>::shared_from_this;
 
@@ -68,9 +61,6 @@ private:
     projection::IInputDevice::Pointer inputDevice_;
     InputBindingState::Pointer bindingState_;
     std::atomic<bool> suppressed_;
-#ifdef USE_CAN
-    projection::CanBridge::Pointer canBridge_;
-#endif
 };
 
 }
