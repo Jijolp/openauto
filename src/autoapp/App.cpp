@@ -20,6 +20,7 @@
 #include <f1x/aasdk/USB/AOAPDevice.hpp>
 #include <f1x/aasdk/TCP/TCPEndpoint.hpp>
 #include <f1x/openauto/autoapp/App.hpp>
+#include <f1x/openauto/autoapp/Projection/CanManager.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
 namespace f1x
@@ -30,18 +31,21 @@ namespace autoapp
 {
 
 App::App(boost::asio::io_context& ioService, aasdk::usb::USBWrapper& usbWrapper, aasdk::tcp::ITCPWrapper& tcpWrapper, service::IAndroidAutoEntityFactory& androidAutoEntityFactory,
-         aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator)
+         aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
+         projection::CanManager::Pointer canManager)
     : ioService_(ioService)
     , usbWrapper_(usbWrapper)
     , tcpWrapper_(tcpWrapper)
     , strand_(ioService_)
     , androidAutoEntityFactory_(androidAutoEntityFactory)
     , usbHub_(std::move(usbHub))
-     , connectedAccessoriesEnumerator_(std::move(connectedAccessoriesEnumerator))
-     , isStopped_(false)
-     , hubWaitArmed_(false)
+    , connectedAccessoriesEnumerator_(std::move(connectedAccessoriesEnumerator))
+    , isStopped_(false)
+    , hubWaitArmed_(false)
+    , canManager_(std::move(canManager))
 {
-
+    // MISSION 1: CanManager already started in main() before App construction.
+    OPENAUTO_LOG(info) << "[App] CanManager ready (started at app launch).";
 }
 
 void App::waitForUSBDevice()
@@ -71,6 +75,18 @@ void App::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket)
             auto tcpEndpoint(std::make_shared<aasdk::tcp::TCPEndpoint>(tcpWrapper_, std::move(socket)));
             androidAutoEntity_ = androidAutoEntityFactory_.create(std::move(tcpEndpoint));
             androidAutoEntity_->start(*this);
+
+            // MISSION 1: Register CanManager button handlers for this session
+            if(canManager_ && androidAutoEntity_)
+            {
+                // The entity will create services including InputService/InputSourceService.
+                // We need to register their button handlers with CanManager.
+                // This is done via a callback after entity creation.
+                // For now, we'll do it when the entity signals it's ready.
+                // Actually, the services are created inside the entity, so we need
+                // a different approach. Let's register in ServiceFactory after
+                // creating input services.
+            }
         }
         catch(const aasdk::error::Error& error)
         {
@@ -93,6 +109,13 @@ void App::stop()
         {
             androidAutoEntity_->stop();
             androidAutoEntity_.reset();
+        }
+
+        // Stop CanManager at app shutdown
+        if(canManager_)
+        {
+            canManager_->stop();
+            OPENAUTO_LOG(info) << "[App] CanManager stopped.";
         }
     });
 }

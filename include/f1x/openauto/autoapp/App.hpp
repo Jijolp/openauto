@@ -25,6 +25,7 @@
 #include <f1x/aasdk/TCP/ITCPEndpoint.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityEventHandler.hpp>
 #include <f1x/openauto/autoapp/Service/IAndroidAutoEntityFactory.hpp>
+#include <f1x/openauto/autoapp/Projection/CanManager.hpp>
 
 namespace f1x
 {
@@ -39,7 +40,8 @@ public:
     typedef std::shared_ptr<App> Pointer;
 
     App(boost::asio::io_context& ioService, aasdk::usb::USBWrapper& usbWrapper, aasdk::tcp::ITCPWrapper& tcpWrapper, service::IAndroidAutoEntityFactory& androidAutoEntityFactory,
-        aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator);
+        aasdk::usb::IUSBHub::Pointer usbHub, aasdk::usb::IConnectedAccessoriesEnumerator::Pointer connectedAccessoriesEnumerator,
+        projection::CanManager::Pointer canManager);
 
     void waitForUSBDevice();
     void start(aasdk::tcp::ITCPEndpoint::SocketPointer socket);
@@ -67,6 +69,11 @@ private:
     // made USBHub::start() reject the first promise with OPERATION_ABORTED.
     // Strand-confined, no extra thread.
     bool hubWaitArmed_;
+
+    // MISSION 1: CanManager owns CanBridge at app level (not per-session).
+    // Started at app launch, stopped at app exit. Emits UI events (night/
+    // temp/ignition) always; forwards button events only when session active.
+    projection::CanManager::Pointer canManager_;
 };
 
 }
