@@ -150,6 +150,7 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     statusBar_->setAaMode(false);
 
     HuEvents::setVideoHost(aaPage_);
+    HuEvents::setStatusBar(statusBar_);
 
     // Overlays cover the whole MainWindow (including status bar).
     splash_->hide();

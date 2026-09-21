@@ -47,6 +47,13 @@ public:
     // Global geometry of the host widget. GUI thread only (reads QWidget).
     static QRect videoHostGeometry();
 
+    // --- floating status overlay (owned by MainWindow, app lifetime) ---
+    // Taps landing on the bar (e.g. the AA logo button) belong to the HU:
+    // InputDevice must not forward them to the phone (the bar now floats
+    // INSIDE the video host rect since the overlay change). GUI thread only.
+    static void setStatusBar(QWidget* bar);
+    static bool isStatusBarChild(const QObject* obj);
+
     // --- navigation state (written by MainWindow, read by InputDevice) ---
     static void setAaPageActive(bool active);
     static bool isAaPageActive();
@@ -68,6 +75,7 @@ private:
     HuEvents();
 
     static QWidget* videoHost_;
+    static QWidget* statusBar_;
     static std::atomic<bool> aaPageActive_;
     static std::atomic<bool> splashActive_;
     static std::atomic<bool> screenOffActive_;

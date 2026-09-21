@@ -16,6 +16,7 @@ namespace ui
 {
 
 QWidget* HuEvents::videoHost_ = nullptr;
+QWidget* HuEvents::statusBar_ = nullptr;
 std::atomic<bool> HuEvents::aaPageActive_{false};
 std::atomic<bool> HuEvents::splashActive_{false};
 std::atomic<bool> HuEvents::screenOffActive_{false};
@@ -74,6 +75,28 @@ QRect HuEvents::videoHostGeometry()
         return QRect();
     }
     return QRect(host->mapToGlobal(QPoint(0, 0)), host->size());
+}
+
+void HuEvents::setStatusBar(QWidget* bar)
+{
+    statusBar_ = bar;
+}
+
+bool HuEvents::isStatusBarChild(const QObject* obj)
+{
+    const QWidget* bar = statusBar_;
+    if(bar == nullptr || obj == nullptr)
+    {
+        return false;
+    }
+    for(const QObject* o = obj; o != nullptr; o = o->parent())
+    {
+        if(o == bar)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void HuEvents::setAaPageActive(bool active)

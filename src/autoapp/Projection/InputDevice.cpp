@@ -84,7 +84,7 @@ bool InputDevice::eventFilter(QObject* obj, QEvent* event)
         }
         else if(event->type() == QEvent::MouseButtonPress || event->type() == QEvent::MouseButtonRelease || event->type() == QEvent::MouseMove)
         {
-            return this->handleTouchEvent(event);
+            return this->handleTouchEvent(obj, event);
         }
     }
 
@@ -202,11 +202,19 @@ bool InputDevice::handleKeyEvent(QEvent* event, QKeyEvent* key)
     return true;
 }
 
-bool InputDevice::handleTouchEvent(QEvent* event)
+bool InputDevice::handleTouchEvent(QObject* obj, QEvent* event)
 {
     // Full-window shields: splash and screen-off are opaque overlays above
     // everything; their first tap is consumed there (not forwarded).
     if(ui::HuEvents::isSplashActive() || ui::HuEvents::isScreenOffActive())
+    {
+        return false;
+    }
+    // Floating status overlay: taps on the bar (clock, temp, AA logo
+    // button) belong to the HU. Since the overlay, the bar sits INSIDE
+    // the video host rect, so without this the logo tap would be
+    // forwarded to the phone and eaten before reaching the button.
+    if(ui::HuEvents::isStatusBarChild(obj))
     {
         return false;
     }
