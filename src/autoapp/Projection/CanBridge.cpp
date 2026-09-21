@@ -7,10 +7,18 @@
 *  the Free Software Foundation; either version 3 of the License, or
 *  (at your option) any later version.
 *
+*  openauto is distributed in the hope that it will be useful,
+*  but WITHOUT ANY WARRANTY; without even the implied warranty of
+*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+*  GNU General Public License for more details.
+*
 *  You should have received a copy of the GNU General Public License
 *  along with openauto. If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <f1x/openauto/autoapp/Projection/CanBridge.hpp>
+
+#ifdef USE_CAN
 #include <algorithm>
 #include <cerrno>
 #include <chrono>
@@ -78,33 +86,33 @@ uint32_t parseHexOr(const QJsonObject& obj, const char* key, uint32_t fallback)
     return out;
 }
 
-bool parseButtonCode(const QString& name, aasdk::proto::enums::ButtonCode::Enum& out)
+bool parseButtonCode(const QString& name, aasdk::proto::enums::ButtonCode_Enum& out)
 {
     // Exhaustive for this aasdk proto snapshot (ButtonCodeEnum.proto).
     // NOTE: there are NO volume codes in this snapshot (no VOLUME_UP /
     // VOLUME_DOWN / PLAY_PAUSE): use TOGGLE_PLAY + NEXT / PREV instead.
-    static const std::map<QString, aasdk::proto::enums::ButtonCode::Enum> table = {
-        {"NONE", aasdk::proto::enums::ButtonCode::NONE},
-        {"MICROPHONE_2", aasdk::proto::enums::ButtonCode::MICROPHONE_2},
-        {"MENU", aasdk::proto::enums::ButtonCode::MENU},
-        {"HOME", aasdk::proto::enums::ButtonCode::HOME},
-        {"BACK", aasdk::proto::enums::ButtonCode::BACK},
-        {"PHONE", aasdk::proto::enums::ButtonCode::PHONE},
-        {"CALL_END", aasdk::proto::enums::ButtonCode::CALL_END},
-        {"UP", aasdk::proto::enums::ButtonCode::UP},
-        {"DOWN", aasdk::proto::enums::ButtonCode::DOWN},
-        {"LEFT", aasdk::proto::enums::ButtonCode::LEFT},
-        {"RIGHT", aasdk::proto::enums::ButtonCode::RIGHT},
-        {"ENTER", aasdk::proto::enums::ButtonCode::ENTER},
-        {"VOLUME_UP", aasdk::proto::enums::ButtonCode::VOLUME_UP},
-        {"VOLUME_DOWN", aasdk::proto::enums::ButtonCode::VOLUME_DOWN},
-        {"MICROPHONE_1", aasdk::proto::enums::ButtonCode::MICROPHONE_1},
-        {"TOGGLE_PLAY", aasdk::proto::enums::ButtonCode::TOGGLE_PLAY},
-        {"NEXT", aasdk::proto::enums::ButtonCode::NEXT},
-        {"PREV", aasdk::proto::enums::ButtonCode::PREV},
-        {"PLAY", aasdk::proto::enums::ButtonCode::PLAY},
-        {"PAUSE", aasdk::proto::enums::ButtonCode::PAUSE},
-        {"SCROLL_WHEEL", aasdk::proto::enums::ButtonCode::SCROLL_WHEEL},
+    static const std::map<QString, aasdk::proto::enums::ButtonCode_Enum> table = {
+        {"NONE", aasdk::proto::enums::ButtonCode_Enum_NONE},
+        {"MICROPHONE_2", aasdk::proto::enums::ButtonCode_Enum_MICROPHONE_2},
+        {"MENU", aasdk::proto::enums::ButtonCode_Enum_MENU},
+        {"HOME", aasdk::proto::enums::ButtonCode_Enum_HOME},
+        {"BACK", aasdk::proto::enums::ButtonCode_Enum_BACK},
+        {"PHONE", aasdk::proto::enums::ButtonCode_Enum_PHONE},
+        {"CALL_END", aasdk::proto::enums::ButtonCode_Enum_CALL_END},
+        {"UP", aasdk::proto::enums::ButtonCode_Enum_UP},
+        {"DOWN", aasdk::proto::enums::ButtonCode_Enum_DOWN},
+        {"LEFT", aasdk::proto::enums::ButtonCode_Enum_LEFT},
+        {"RIGHT", aasdk::proto::enums::ButtonCode_Enum_RIGHT},
+        {"ENTER", aasdk::proto::enums::ButtonCode_Enum_ENTER},
+        {"VOLUME_UP", aasdk::proto::enums::ButtonCode_Enum_VOLUME_UP},
+        {"VOLUME_DOWN", aasdk::proto::enums::ButtonCode_Enum_VOLUME_DOWN},
+        {"MICROPHONE_1", aasdk::proto::enums::ButtonCode_Enum_MICROPHONE_1},
+        {"TOGGLE_PLAY", aasdk::proto::enums::ButtonCode_Enum_TOGGLE_PLAY},
+        {"NEXT", aasdk::proto::enums::ButtonCode_Enum_NEXT},
+        {"PREV", aasdk::proto::enums::ButtonCode_Enum_PREV},
+        {"PLAY", aasdk::proto::enums::ButtonCode_Enum_PLAY},
+        {"PAUSE", aasdk::proto::enums::ButtonCode_Enum_PAUSE},
+        {"SCROLL_WHEEL", aasdk::proto::enums::ButtonCode_Enum_SCROLL_WHEEL},
     };
 
     const auto it = table.find(name.toUpper());
@@ -260,9 +268,9 @@ CanMap CanBridge::loadMap(const std::string& mapPath)
             continue;
         }
 
-        aasdk::proto::enums::ButtonCode::Enum code = aasdk::proto::enums::ButtonCode::NONE;
+        aasdk::proto::enums::ButtonCode_Enum code = aasdk::proto::enums::ButtonCode_Enum_NONE;
         const QString codeName = obj.value("aa_button").toString();
-        if(!parseButtonCode(codeName, code) || code == aasdk::proto::enums::ButtonCode::NONE)
+        if(!parseButtonCode(codeName, code) || code == aasdk::proto::enums::ButtonCode_Enum_NONE)
         {
             OPENAUTO_LOG(warning) << "[CanBridge] button entry with unknown aa_button \""
                                   << codeName.toStdString() << "\" skipped.";
@@ -506,8 +514,6 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
             nightKnown_ = true;
             nightOn_ = on;
             OPENAUTO_LOG(info) << "[CanBridge] night mode " << (on ? "ON" : "OFF");
-            // UI-2a: first real CAN consumer — the single window re-themes
-            // (read-only signal, no coupling back into this bridge).
             ui::HuEvents::notifyNightMode(on);
         }
     }
@@ -529,3 +535,89 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
 }
 }
 }
+
+#else // USE_CAN is OFF - no-op implementations
+
+namespace f1x
+{
+namespace openauto
+{
+namespace autoapp
+{
+namespace projection
+{
+
+// Forward declare the static methods to avoid linker errors when USE_CAN is OFF
+std::string CanBridge::interfaceFromEnv()
+{
+    return "vcan0";
+}
+
+std::string CanBridge::mapPathFromEnv()
+{
+    return "car/can_map.json";
+}
+
+CanBridge::ButtonCodes CanBridge::requiredButtonCodes(const std::string&)
+{
+    return ButtonCodes{};
+}
+
+CanMap CanBridge::loadMap(const std::string&)
+{
+    return CanMap{};
+}
+
+// No-op implementations for the instance methods
+CanBridge::CanBridge(IInputDeviceEventHandler&, std::string, std::string)
+    : eventHandler_(*reinterpret_cast<IInputDeviceEventHandler*>(nullptr)) // dummy reference, never used
+{
+}
+
+CanBridge::~CanBridge()
+{
+}
+
+void CanBridge::start()
+{
+}
+
+void CanBridge::stop()
+{
+}
+
+bool CanBridge::isRunning() const
+{
+    return false;
+}
+
+void CanBridge::addEventHandler(IInputDeviceEventHandler&)
+{
+}
+
+std::string CanBridge::interfaceFromEnv()
+{
+    return "vcan0";
+}
+
+std::string CanBridge::mapPathFromEnv()
+{
+    return "car/can_map.json";
+}
+
+CanBridge::ButtonCodes CanBridge::requiredButtonCodes(const std::string&)
+{
+    return ButtonCodes{};
+}
+
+CanMap CanBridge::loadMap(const std::string&)
+{
+    return CanMap{};
+}
+
+}
+}
+}
+}
+
+#endif // USE_CAN
