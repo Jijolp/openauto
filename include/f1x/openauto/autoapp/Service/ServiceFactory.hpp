@@ -20,6 +20,7 @@
 
 #include <f1x/openauto/autoapp/Service/IServiceFactory.hpp>
 #include <f1x/openauto/autoapp/Configuration/IConfiguration.hpp>
+#include <f1x/openauto/autoapp/Projection/CanManager.hpp>
 
 namespace f1x
 {
@@ -33,7 +34,7 @@ namespace service
 class ServiceFactory: public IServiceFactory
 {
 public:
-    ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration);
+    ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration, projection::CanManager::Pointer canManager);
     ServiceList create(aasdk::messenger::IMessenger::Pointer messenger) override;
 
 private:
@@ -44,6 +45,7 @@ private:
 
     boost::asio::io_context& ioService_;
     configuration::IConfiguration::Pointer configuration_;
+    projection::CanManager::Pointer canManager_;
 };
 
 }

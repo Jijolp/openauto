@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <algorithm>
+#include <f1x/openauto/Common/Log.hpp>
 #include <f1x/aasdk/Channel/AV/MediaAudioServiceChannel.hpp>
 #include <f1x/aasdk/Channel/AV/SystemAudioServiceChannel.hpp>
 #include <f1x/aasdk/Channel/AV/SpeechAudioServiceChannel.hpp>
@@ -57,11 +58,11 @@ namespace autoapp
 namespace service
 {
 
-ServiceFactory::ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration)
+ServiceFactory::ServiceFactory(boost::asio::io_context& ioService, configuration::IConfiguration::Pointer configuration, projection::CanManager::Pointer canManager)
     : ioService_(ioService)
     , configuration_(std::move(configuration))
+    , canManager_(std::move(canManager))
 {
-
 }
 
 ServiceList ServiceFactory::create(aasdk::messenger::IMessenger::Pointer messenger)
@@ -116,13 +117,12 @@ IService::Pointer ServiceFactory::createBluetoothService(aasdk::messenger::IMess
 
 void ServiceFactory::createInputServices(ServiceList& serviceList, aasdk::messenger::IMessenger::Pointer messenger)
 {
+    // P3: CAN button codes are still declared in discovery so the phone binds them.
+    // CanManager handles button events at app level now.
 #ifdef USE_CAN
-    // Union the CAN-mapped buttons into the declared keycodes so the phone
-    // binds them: discovery advertises the union (see InputService::
-    // fillFeatures), the BindingRequest then covers the CAN buttons.
     {
-        const auto canCodes = projection::CanBridge::requiredButtonCodes(
-            projection::CanBridge::mapPathFromEnv());
+        const auto canCodes = projection::CanManager::requiredButtonCodes(
+            projection::CanManager::mapPathFromEnv());
         auto buttonCodes = configuration_->getButtonCodes();
         for(const auto code : canCodes)
         {
@@ -166,12 +166,16 @@ void ServiceFactory::createInputServices(ServiceList& serviceList, aasdk::messen
     auto bindingState = std::make_shared<InputBindingState>();
     auto legacyInput = std::make_shared<InputService>(ioService_, messenger, inputDevice, bindingState);
     auto modernInput = std::make_shared<InputSourceService>(ioService_, messenger, inputDevice, bindingState);
-#ifdef USE_CAN
-    // S3: CAN buttons feed both channels (legacy is undisclosed since the
-    // field-4 replacement: it would never open, so legacy-only feed would
-    // silence CAN).
-    legacyInput->getCanBridge()->addEventHandler(*modernInput);
-#endif
+
+    // MISSION 1: Register both input services with CanManager for button events.
+    // CanManager will forward button events only when session is active.
+    if(canManager_)
+    {
+        canManager_->registerButtonHandler(*legacyInput);
+        canManager_->registerButtonHandler(*modernInput);
+        OPENAUTO_LOG(info) << "[ServiceFactory] Registered input services with CanManager.";
+    }
+
     serviceList.emplace_back(std::move(legacyInput));
     serviceList.emplace_back(std::move(modernInput));
 }
