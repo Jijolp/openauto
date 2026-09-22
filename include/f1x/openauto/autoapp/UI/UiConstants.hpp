@@ -20,7 +20,7 @@ struct UiConstants
 {
     // Displayed in Paramètres → "Version logicielle". Bump per release so
     // a human can check the running binary is the latest build.
-    static constexpr const char* APP_VERSION = "0.9.0-ui2b";
+    static constexpr const char* APP_VERSION = "0.9.0-race1";
 
     // Dev windowed geometry (OPENAUTO_WINDOWED=1), target head-unit 1024x600.
     static constexpr int WINDOWED_WIDTH = 1024;
@@ -62,6 +62,35 @@ struct UiConstants
     static constexpr int LOGO_AA_BUTTON_SIZE = 48;
     static constexpr int LOGO_AA_ICON_SIZE = 26;
     static constexpr int LOGO_SCREENOFF_SIZE = 120;
+
+    // --- Race Mode v1: layout (1024x600 dev, 1080p-ready via constantes) ---
+    // Colonne nav ~58% largeur, colonne droite 42% (gauge haut / G bas).
+    static constexpr int RACE_OUTER_MARGIN = 16;
+    static constexpr int RACE_GRID_SPACING = 16;
+    static constexpr int RACE_NAV_WIDTH_PCT = 58;
+    static constexpr int RACE_PANEL_RADIUS = 6;
+    // Vitesse : TRÈS gros chiffres (Inter Bold). Unité discrète.
+    static constexpr int RACE_SPEED_FONT_SIZE = 96;
+    static constexpr int RACE_SPEED_UNIT_FONT_SIZE = 18;
+    static constexpr int RACE_RPM_FONT_SIZE = 20;
+    // Compte-tours : fond d'échelle + début zone rouge (75%).
+    static constexpr int RACE_RPM_MAX = 8000;
+    static constexpr int RACE_REDLINE_PCT = 75;
+    static constexpr int RACE_RPM_BAR_HEIGHT = 18;
+    // G-mètre : cercles 0.5g / 1.0g, point rouge, colonne chiffres.
+    static constexpr int RACE_G_FONT_SIZE = 18;
+    static constexpr int RACE_G_LABEL_FONT_SIZE = 12;
+    static constexpr int RACE_NAV_LOGO_SIZE = 64;
+    // --- Race Mode v1: timings transition (ms) ---
+    // Logo central : 720° + gris→rouge + scale up, OutCubic.
+    static constexpr int RACE_LOGO_SPIN_MS = 700;
+    // Quadrants : sortie + fade out, ease-in.
+    static constexpr int RACE_QUAD_OUT_MS = 450;
+    // Panneaux : entrée + fade in, stagger 80ms (pattern splash), ease-out.
+    static constexpr int RACE_PANEL_IN_MS = 350;
+    static constexpr int RACE_PANEL_STAGGER_MS = 80;
+    // Retour menu : fade court (pas d'inverse complet — choix documenté).
+    static constexpr int RACE_BACK_FADE_MS = 250;
 
     // Splash timings (all in ms, sequential).
     static constexpr int SPLASH_FADE_IN_MS = 600;

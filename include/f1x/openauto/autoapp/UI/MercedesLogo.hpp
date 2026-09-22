@@ -29,6 +29,7 @@ class MercedesLogo : public QWidget
     Q_OBJECT
     Q_PROPERTY(QColor color READ color WRITE setColor)
     Q_PROPERTY(qreal scaleFactor READ scaleFactor WRITE setScaleFactor)
+    Q_PROPERTY(qreal rotationAngle READ rotationAngle WRITE setRotationAngle)
 public:
     explicit MercedesLogo(QWidget* parent = nullptr, int baseSize = 96);
     ~MercedesLogo() override;
@@ -39,6 +40,10 @@ public:
     bool isActive() const;
     void setScaleFactor(qreal s);
     qreal scaleFactor() const;
+    // Race Mode v1: spin d'entrée (720°, animé via QPropertyAnimation).
+    // Rotation en degrés autour du centre, appliquée dans paintEvent.
+    void setRotationAngle(qreal deg);
+    qreal rotationAngle() const;
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -49,6 +54,7 @@ private:
 
     QColor color_;
     qreal scale_;
+    qreal rotation_;
     int baseSize_;
     bool active_;
     std::unique_ptr<QSvgRenderer> renderer_;

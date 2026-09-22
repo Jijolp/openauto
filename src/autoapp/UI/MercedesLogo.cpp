@@ -24,6 +24,7 @@ MercedesLogo::MercedesLogo(QWidget* parent, int baseSize)
     : QWidget(parent)
     , color_(QColor(0xC8, 0xC8, 0xCC))
     , scale_(1.0)
+    , rotation_(0.0)
     , baseSize_(baseSize)
     , active_(false)
 {
@@ -87,6 +88,20 @@ qreal MercedesLogo::scaleFactor() const
     return scale_;
 }
 
+void MercedesLogo::setRotationAngle(qreal deg)
+{
+    if(!qFuzzyCompare(rotation_, deg))
+    {
+        rotation_ = deg;
+        this->update();
+    }
+}
+
+qreal MercedesLogo::rotationAngle() const
+{
+    return rotation_;
+}
+
 void MercedesLogo::reloadSvg()
 {
     const QString fileName = active_ ? QStringLiteral("/../assets/mercedes-red.svg")
@@ -118,6 +133,7 @@ void MercedesLogo::paintEvent(QPaintEvent*)
     const qreal cy = h / 2.0;
     p.translate(cx, cy);
     p.scale(scale_, scale_);
+    p.rotate(rotation_);
     p.translate(-cx, -cy);
 
     if(renderer_ != nullptr)
