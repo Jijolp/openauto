@@ -64,7 +64,9 @@ StatusBar::StatusBar(QWidget* parent)
     titleLabel_->setFont(titleFont);
     titleLabel_->hide();
 
-    layout_->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
+    // 40px bar, content ~22px clock + 18px temp = ~24px: top margin 6px
+    // centers vertically (§42: was hugging top edge).
+    layout_->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 6,
                                 UiConstants::STATUS_BAR_MARGIN, 0);
     layout_->setSpacing(8);
     // Home layout (unchanged): clock | temp | ... | NO SIG. Every child

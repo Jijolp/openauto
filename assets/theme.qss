@@ -375,27 +375,27 @@ QLabel#soonBadge {
 #raceSpeedValue {
     color: #F5F5F5;
     background: transparent;
-    font-size: 88px;
+    font-size: 80px;
     font-weight: bold;
 }
 
 #raceRpmValue {
     color: #F5F5F5;
     background: transparent;
-    font-size: 72px;
+    font-size: 66px;
     font-weight: bold;
 }
 
 #raceSpeedUnit {
     color: #9E9E9E;
     background: transparent;
-    font-size: 88px;
+    font-size: 80px;
 }
 
 #raceRpmUnit {
     color: #9E9E9E;
     background: transparent;
-    font-size: 72px;
+    font-size: 66px;
 }
 
 #raceGValue {
