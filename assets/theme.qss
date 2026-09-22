@@ -328,17 +328,6 @@ QPushButton#aaHomeButton:pressed {
     border-radius: 10px;
 }
 
-#aaClock {
-    color: #F5F5F5;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-#aaTemp, #aaSignal {
-    color: #9E9E9E;
-    font-size: 13px;
-}
-
 QPushButton#aaFloatingButton {
     background: #17171B;
     border: 1px solid #2A2A30;

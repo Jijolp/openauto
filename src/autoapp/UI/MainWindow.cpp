@@ -22,7 +22,6 @@
 #include <QShortcut>
 #include <QStackedLayout>
 #include <QStackedWidget>
-#include <QTime>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -98,9 +97,6 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , carPage_(nullptr)
     , aaPlaceholder_(nullptr)
     , aaCluster_(nullptr)
-    , aaClock_(nullptr)
-    , aaTemp_(nullptr)
-    , aaSignal_(nullptr)
     , aaHomeButton_(nullptr)
     , aaHomeLogo_(nullptr)
     , splash_(new SplashOverlay(this))
@@ -159,28 +155,18 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     HuEvents::setVideoHost(aaPage_);
     HuEvents::setStatusBar(statusBar_);
 
-    // Mini-cluster AA: bottom-right over the video, blended with AA's own
-    // bottom bar (no bandeau on the AA page anymore). Child of the AA page
-    // so it only shows when AA is on top (StackAll). Container + labels
-    // are click-transparent; only the logo button takes clicks.
+    // Bouton logo AA seul : flottant au-dessus de la vidéo, décalé à
+    // gauche de la zone infos AA (5G/horloge en bas à droite). Enfant de
+    // la page AA : visible seulement quand AA est au-dessus (StackAll).
+    // Seul le bouton prend les clics (le conteneur est transparent).
     aaCluster_ = new QWidget(aaPage_);
     aaCluster_->setObjectName(QStringLiteral("aaCluster"));
     aaCluster_->setAttribute(Qt::WA_StyledBackground, true);
     aaCluster_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     aaCluster_->setFocusPolicy(Qt::NoFocus);
     auto* clusterLayout = new QHBoxLayout(aaCluster_);
-    clusterLayout->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
-                                      UiConstants::STATUS_BAR_MARGIN, 0);
-    clusterLayout->setSpacing(8);
-    aaClock_ = new QLabel(aaCluster_);
-    aaClock_->setObjectName(QStringLiteral("aaClock"));
-    aaClock_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    aaTemp_ = new QLabel(QStringLiteral("--°"), aaCluster_);
-    aaTemp_->setObjectName(QStringLiteral("aaTemp"));
-    aaTemp_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    aaSignal_ = new QLabel(QStringLiteral("NO SIG"), aaCluster_);
-    aaSignal_->setObjectName(QStringLiteral("aaSignal"));
-    aaSignal_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    clusterLayout->setContentsMargins(0, 0, 0, 0);
+    clusterLayout->setSpacing(0);
     aaHomeButton_ = new QPushButton(aaCluster_);
     aaHomeButton_->setObjectName(QStringLiteral("aaFloatingButton"));
     aaHomeButton_->setFixedSize(UiConstants::AA_FLOAT_BUTTON_SIZE, UiConstants::AA_FLOAT_BUTTON_SIZE);
@@ -192,21 +178,7 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     aaHomeLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
     aaHomeLogo_->move((UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2,
                       (UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2);
-    clusterLayout->addWidget(aaClock_);
-    clusterLayout->addWidget(aaTemp_);
-    clusterLayout->addWidget(aaSignal_);
     clusterLayout->addWidget(aaHomeButton_);
-    {
-        auto* clockTimer = new QTimer(aaCluster_);
-        connect(clockTimer, &QTimer::timeout, this, [this]() {
-            if(aaClock_ != nullptr)
-            {
-                aaClock_->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
-            }
-        });
-        clockTimer->start(1000);
-        aaClock_->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
-    }
     HuEvents::setAaOverlay(aaCluster_);
     connect(aaHomeButton_, &QPushButton::clicked, this, &MainWindow::showHomePage);
     connect(aaHomeButton_, &QPushButton::pressed, this, [this]() {
@@ -360,15 +332,15 @@ void MainWindow::layoutStatusOverlay()
 
 void MainWindow::layoutAaCluster()
 {
-    // Mini-cluster bottom-right over the video, next to AA's own
-    // clock/signal zone. Recomputed on every resize (1080p-ready).
+    // Bouton logo seul, décalé à gauche de la zone infos AA (5G/horloge
+    // en bas à droite). Recomputed on every resize (1080p-ready).
     if(aaCluster_ == nullptr || aaPage_ == nullptr)
     {
         return;
     }
     aaCluster_->adjustSize();
     const int m = UiConstants::AA_OVERLAY_MARGIN;
-    aaCluster_->move(aaPage_->width() - aaCluster_->width() - m,
+    aaCluster_->move(aaPage_->width() - aaCluster_->width() - m - UiConstants::AA_FLOAT_SHIFT_LEFT,
                      aaPage_->height() - aaCluster_->height() - m);
     if(aaCluster_->isVisible())
     {
@@ -440,10 +412,6 @@ void MainWindow::onVideoStopped()
 void MainWindow::onTempExt(int tempC)
 {
     statusBar_->setTemp(tempC);
-    if(aaTemp_ != nullptr)
-    {
-        aaTemp_->setText(QString::number(tempC) + QStringLiteral("°"));
-    }
 }
 
 void MainWindow::onIgnition(bool on)

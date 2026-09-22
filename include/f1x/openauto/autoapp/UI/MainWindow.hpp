@@ -112,9 +112,6 @@ private:
     // Mini-cluster AA flottant bas-droite (horloge + temp + signal +
     // bouton logo → accueil), enfant de la page AA, intégré à la barre AA.
     QWidget* aaCluster_;
-    QLabel* aaClock_;
-    QLabel* aaTemp_;
-    QLabel* aaSignal_;
     QPushButton* aaHomeButton_;
     MercedesLogo* aaHomeLogo_;
     SplashOverlay* splash_;
