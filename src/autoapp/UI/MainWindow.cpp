@@ -677,7 +677,7 @@ void MainWindow::returnHomeFromRace()
 {    // Return = short 250ms fade of the race page (documented choice: the
     // full inverse choreography is not worth the fragility — see §36).
     // AA auto-switch never takes this path: it stays instant.
-    if(raceTransitionActive_ || stack_->currentIndex() != RACE_PAGE)
+    if(returningFromRace_ || raceTransitionActive_ || stack_->currentIndex() != RACE_PAGE)
     {
         this->showHomePage();
         return;
@@ -687,6 +687,7 @@ void MainWindow::returnHomeFromRace()
         this->showHomePage();
         return;
     }
+    returningFromRace_ = true;
     auto* eff = new QGraphicsOpacityEffect(racePage_);
     racePage_->setGraphicsEffect(eff);
     auto* fade = new QPropertyAnimation(eff, "opacity", this);
@@ -694,16 +695,20 @@ void MainWindow::returnHomeFromRace()
     fade->setStartValue(1.0);
     fade->setEndValue(0.0);
     fade->setEasingCurve(QEasingCurve::OutCubic);
-    connect(fade, &QPropertyAnimation::finished, this, [this, fade]() {
+    connect(fade, &QPropertyAnimation::finished, this, [this, eff, fade]() {
         fade->deleteLater();
-        // Effect always cleaned (the page may now sit below AA).
-        // NOTE: AA may have taken over mid-fade (preemptive auto-switch):
-        // only go home if still on Race — never yank the user out of AA.
         racePage_->setGraphicsEffect(nullptr);
-        if(stack_->currentIndex() == RACE_PAGE && !aaSessionActive_)
+        // Only go home if still on Race and not already returning.
+        if(stack_->currentIndex() == RACE_PAGE && !aaSessionActive_ && returningFromRace_)
         {
+            returningFromRace_ = false;
             this->showHomePage();
         }
+        else
+        {
+            returningFromRace_ = false;
+        }
+        eff->deleteLater();
     });
     fade->start();
 }

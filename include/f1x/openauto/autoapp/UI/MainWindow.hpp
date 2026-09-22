@@ -66,7 +66,6 @@ signals:
     void openSettings();
     void toggleCursor();
     void openConnectDialog();
-    void stopAndroidAuto();
 
 public slots:
     void setNightMode(bool on);
@@ -163,6 +162,7 @@ private:
     // for the animation, restored after — see startRaceTransition).
     QRect raceLogoOrigGeom_;
     std::vector<QPropertyAnimation*> raceAnims_;
+    bool returningFromRace_ = false;
 
     // P2: existing OpenAuto config embedded in the settings page.
     QWidget* embeddedSettings_;
