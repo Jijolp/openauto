@@ -291,14 +291,13 @@ void MainWindow::showAAPage()
     }
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
-    // No bandeau on the AA page: full-height video, only the floating
-    // logo button (bottom-right, blended with AA's own bottom bar).
-    statusBar_->hide();
-    this->layoutAaCluster();
+    // AA waiting screen (no video yet): show status bar WITHOUT back button
+    // (empty title = home layout: clock | temp | ... | NO SIG).
+    statusBar_->setTitle(QString());
+    statusBar_->show();
     if(aaCluster_ != nullptr)
     {
-        aaCluster_->show();
-        aaCluster_->raise();
+        aaCluster_->hide();
     }
 }
 
@@ -782,7 +781,7 @@ void MainWindow::onVideoStarted()
             static_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect())->setOpacity(1.0);
         }
     }
-    // Wake from screen-off (any state) and show AA.
+    // Wake from screen-off (any state) and show AA with video.
     if(HuEvents::isScreenOffActive())
     {
         this->hideScreenOff();
@@ -791,7 +790,14 @@ void MainWindow::onVideoStarted()
     {
         aaPlaceholder_->hide();
     }
-    this->showAAPage();
+    // Video connected: full-height, hide status bar, show floating aaCluster.
+    statusBar_->hide();
+    this->layoutAaCluster();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->show();
+        aaCluster_->raise();
+    }
 }
 
 void MainWindow::onVideoStopped()

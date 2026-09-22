@@ -40,17 +40,18 @@ StatusBar::StatusBar(QWidget* parent)
     labelSignal_->setObjectName(QStringLiteral("labelSignal"));
 
     backButton_->setObjectName(QStringLiteral("statusBackButton"));
-    backButton_->setFixedSize(UiConstants::STATUS_BACK_BUTTON_WIDTH, UiConstants::STATUS_BAR_HEIGHT);
+    // Logo only, no background/border — sized to match text height (~24px)
+    // to blend with clock/temp (§42).
+    const int logoSize = UiConstants::STATUS_BACK_ICON_SIZE;
+    backButton_->setFixedSize(logoSize, logoSize);
     backButton_->setFlat(true);
     backButton_->setFocusPolicy(Qt::NoFocus);
     backButton_->setCursor(Qt::PointingHandCursor);
+    backButton_->setStyleSheet(QStringLiteral("background:transparent;border:none;"));
     backLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     backLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-    backLogo_->move((backButton_->width() - backLogo_->width()) / 2,
-                    (backButton_->height() - backLogo_->height()) / 2);
-    // Touch-first (§40): navigate on PRESS, not clicked — on a small
-    // touchscreen the release often lands off-target (finger slip) and
-    // clicked never fires, while the press visual proves press arrives.
+    backLogo_->move(0, 0);
+    // Touch-first (§40): navigate on PRESS, not clicked.
     connect(backButton_, &QPushButton::pressed, this, &StatusBar::backClicked);
     connect(backButton_, &QPushButton::pressed, this, [this]() { backLogo_->setActive(true); });
     connect(backButton_, &QPushButton::released, this, [this]() { backLogo_->setActive(false); });
