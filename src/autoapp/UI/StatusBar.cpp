@@ -40,7 +40,7 @@ StatusBar::StatusBar(QWidget* parent)
     labelSignal_->setObjectName(QStringLiteral("labelSignal"));
 
     backButton_->setObjectName(QStringLiteral("statusBackButton"));
-    backButton_->setFixedSize(UiConstants::STATUS_BACK_BUTTON_SIZE, UiConstants::STATUS_BACK_BUTTON_SIZE);
+    backButton_->setFixedSize(UiConstants::STATUS_BACK_BUTTON_WIDTH, UiConstants::STATUS_BAR_HEIGHT);
     backButton_->setFlat(true);
     backButton_->setFocusPolicy(Qt::NoFocus);
     backButton_->setCursor(Qt::PointingHandCursor);
@@ -48,7 +48,10 @@ StatusBar::StatusBar(QWidget* parent)
     backLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
     backLogo_->move((backButton_->width() - backLogo_->width()) / 2,
                     (backButton_->height() - backLogo_->height()) / 2);
-    connect(backButton_, &QPushButton::clicked, this, &StatusBar::backClicked);
+    // Touch-first (§40): navigate on PRESS, not clicked — on a small
+    // touchscreen the release often lands off-target (finger slip) and
+    // clicked never fires, while the press visual proves press arrives.
+    connect(backButton_, &QPushButton::pressed, this, &StatusBar::backClicked);
     connect(backButton_, &QPushButton::pressed, this, [this]() { backLogo_->setActive(true); });
     connect(backButton_, &QPushButton::released, this, [this]() { backLogo_->setActive(false); });
     backButton_->hide();
@@ -64,11 +67,12 @@ StatusBar::StatusBar(QWidget* parent)
     layout_->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
                                 UiConstants::STATUS_BAR_MARGIN, 0);
     layout_->setSpacing(8);
-    // Home layout (unchanged): clock | temp | ... | NO SIG.
-    layout_->addWidget(labelClock_);
-    layout_->addWidget(labelTemp_);
+    // Home layout (unchanged): clock | temp | ... | NO SIG. Every child
+    // explicitly V-centered (§40: default alignment hugged the top edge).
+    layout_->addWidget(labelClock_, 0, Qt::AlignVCenter);
+    layout_->addWidget(labelTemp_, 0, Qt::AlignVCenter);
     layout_->addStretch();
-    layout_->addWidget(labelSignal_);
+    layout_->addWidget(labelSignal_, 0, Qt::AlignVCenter);
 
     connect(timer_, &QTimer::timeout, this, &StatusBar::updateClock);
     timer_->start(1000);
@@ -121,17 +125,17 @@ void StatusBar::relayout(bool titled)
     }
     if(!titled)
     {
-        layout_->addWidget(labelClock_);
-        layout_->addWidget(labelTemp_);
+        layout_->addWidget(labelClock_, 0, Qt::AlignVCenter);
+        layout_->addWidget(labelTemp_, 0, Qt::AlignVCenter);
         layout_->addStretch();
-        layout_->addWidget(labelSignal_);
+        layout_->addWidget(labelSignal_, 0, Qt::AlignVCenter);
         return;
     }
-    layout_->addWidget(backButton_);
-    layout_->addWidget(titleLabel_);
+    layout_->addWidget(backButton_, 0, Qt::AlignVCenter);
+    layout_->addWidget(titleLabel_, 0, Qt::AlignVCenter);
     layout_->addStretch();
-    layout_->addWidget(labelTemp_);
-    layout_->addWidget(labelClock_);
+    layout_->addWidget(labelTemp_, 0, Qt::AlignVCenter);
+    layout_->addWidget(labelClock_, 0, Qt::AlignVCenter);
 }
 
 void StatusBar::paintEvent(QPaintEvent*)

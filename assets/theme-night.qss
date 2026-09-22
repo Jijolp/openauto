@@ -372,6 +372,29 @@ QLabel#soonBadge {
     background: transparent;
 }
 
+/* §40: sizes in QSS (see theme.qss) — the generic 14px rule wins over code. */
+#raceSpeedValue {
+    font-size: 112px;
+    font-weight: bold;
+}
+
+#raceRpmValue {
+    font-size: 76px;
+    font-weight: bold;
+}
+
+#raceSpeedUnit {
+    font-size: 20px;
+}
+
+#raceGValue {
+    font-size: 18px;
+}
+
+#raceGLabel {
+    font-size: 12px;
+}
+
 #raceSpeedUnit,
 #raceRpmValue {
     color: #6E6E6E;

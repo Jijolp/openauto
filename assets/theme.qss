@@ -375,6 +375,30 @@ QLabel#soonBadge {
     background: transparent;
 }
 
+/* §40: the generic QWidget 14px rule wins over setFont() in code — real
+ * sizes MUST live here (same pattern as #quadrant* 32px). */
+#raceSpeedValue {
+    font-size: 112px;
+    font-weight: bold;
+}
+
+#raceRpmValue {
+    font-size: 76px;
+    font-weight: bold;
+}
+
+#raceSpeedUnit {
+    font-size: 20px;
+}
+
+#raceGValue {
+    font-size: 18px;
+}
+
+#raceGLabel {
+    font-size: 12px;
+}
+
 #raceSpeedUnit,
 #raceRpmValue {
     color: #9E9E9E;

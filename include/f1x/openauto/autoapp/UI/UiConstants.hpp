@@ -33,7 +33,9 @@ struct UiConstants
     // Unified bar (§39): titled pages show [back logo] TITLE left,
     // temp + clock right. Home layout unchanged.
     static constexpr int STATUS_TITLE_FONT_SIZE = 20;
-    static constexpr int STATUS_BACK_BUTTON_SIZE = 36;
+    // Back hit area: full bar height, wide (touch-first: fat fingers +
+    // release-slip must not miss it — see §40).
+    static constexpr int STATUS_BACK_BUTTON_WIDTH = 48;
     static constexpr int STATUS_BACK_ICON_SIZE = 24;
 
     // Clock / placeholders font sizes (points are scaled by Qt, px in QSS).
@@ -89,7 +91,7 @@ struct UiConstants
     // Logo central : 720° + gris→rouge + GROSSIT énormément (OutCubic),
     // PUIS fade out qui libère l'interface (panneaux entrent derrière).
     static constexpr int RACE_LOGO_SPIN_MS = 700;
-    static constexpr double RACE_LOGO_GROW = 2.8;
+    static constexpr double RACE_LOGO_GROW = 2.6;
     static constexpr int RACE_LOGO_FADE_MS = 300;
     // Quadrants : sortie + fade out, ease-in.
     static constexpr int RACE_QUAD_OUT_MS = 450;
