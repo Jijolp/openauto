@@ -139,8 +139,10 @@ void MercedesLogo::paintEvent(QPaintEvent*)
     if(renderer_ != nullptr)
     {
         // Vector re-render at widget size — crisp at 26/120/180 alike,
-        // never a scaled bitmap.
-        renderer_->render(&p, QRectF(0.0, 0.0, w, h));
+        // never a scaled bitmap. Small inset (2px) prevents clipping by
+        // parent's border-radius (e.g. center logo button 90px radius).
+        const qreal inset = 2.0;
+        renderer_->render(&p, QRectF(inset, inset, w - 2*inset, h - 2*inset));
         return;
     }
 

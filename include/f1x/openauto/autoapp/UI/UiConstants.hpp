@@ -76,11 +76,12 @@ struct UiConstants
     static constexpr int RACE_GRID_SPACING = 16;
     static constexpr int RACE_NAV_WIDTH_PCT = 58;
     static constexpr int RACE_PANEL_RADIUS = 6;
-    // Vitesse + RPM : chiffres bruts qui remplissent le panneau (Inter
-    // Bold), unités sur la même ligne que la donnée (pas de barre/arc).
-    static constexpr int RACE_SPEED_FONT_SIZE = 112;
-    static constexpr int RACE_RPM_FONT_SIZE = 76;
-    static constexpr int RACE_SPEED_UNIT_FONT_SIZE = 20;
+    // Vitesse + RPM : lignes ancrées à DROITE (l'unité ne bouge jamais,
+    // la valeur grandit vers la gauche), unités collées aux valeurs et
+    // de MÊME TAILLE (§41). Tailles calculées pour tenir sur une ligne
+    // à 1024 (speed "130 km/h" ~4.3em, rpm "2500 tr/min" ~5.3em).
+    static constexpr int RACE_SPEED_FONT_SIZE = 88;
+    static constexpr int RACE_RPM_FONT_SIZE = 72;
     // Compte-tours : fond d'échelle pour le clamp d'affichage.
     static constexpr int RACE_RPM_MAX = 8000;
     // G-mètre : cercles 0.5g / 1.0g, point rouge, colonne chiffres.

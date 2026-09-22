@@ -366,25 +366,32 @@ QLabel#soonBadge {
     background: transparent;
 }
 
-#raceSpeedValue,
-#raceRpmValue {
+/* §40-41: sizes in QSS (see theme.qss) — the generic 14px rule wins
+ * over code. Gauge rows right-anchored, units same size as values. */
+#raceSpeedValue {
     color: #C9C9C9;
     background: transparent;
-}
-
-/* §40: sizes in QSS (see theme.qss) — the generic 14px rule wins over code. */
-#raceSpeedValue {
-    font-size: 112px;
+    font-size: 88px;
     font-weight: bold;
 }
 
 #raceRpmValue {
-    font-size: 76px;
+    color: #C9C9C9;
+    background: transparent;
+    font-size: 72px;
     font-weight: bold;
 }
 
 #raceSpeedUnit {
-    font-size: 20px;
+    color: #6E6E6E;
+    background: transparent;
+    font-size: 88px;
+}
+
+#raceRpmUnit {
+    color: #6E6E6E;
+    background: transparent;
+    font-size: 72px;
 }
 
 #raceGValue {
@@ -393,12 +400,6 @@ QLabel#soonBadge {
 
 #raceGLabel {
     font-size: 12px;
-}
-
-#raceSpeedUnit,
-#raceRpmValue {
-    color: #6E6E6E;
-    background: transparent;
 }
 
 #raceGValue {

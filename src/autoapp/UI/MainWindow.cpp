@@ -134,11 +134,13 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     // Item4: the stack takes the WHOLE window — the status bar floats
-    // above it as a click-transparent overlay (video is full-height,
-    // no longer squashed by a 40px layout row).
+    // above it (video is full-height, no longer squashed by a 40px layout row).
+    // Status bar is NOT transparent for mouse events anymore (§41): it has
+    // interactive elements (back button). InputDevice exempts status-bar
+    // taps from phone forwarding via isStatusBarChild/statusBarGeometry.
     layout->addWidget(stack_, 1);
     this->setCentralWidget(central);
-    statusBar_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    // statusBar_->setAttribute(Qt::WA_TransparentForMouseEvents, true);  // REMOVED
 
     // FIX UI-2b video: keep every page rendered at all times, stacked —
     // the GStreamer sink behind QVideoWidget loses its overlay window on

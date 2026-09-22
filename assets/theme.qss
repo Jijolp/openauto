@@ -369,26 +369,33 @@ QLabel#soonBadge {
     background: transparent;
 }
 
-#raceSpeedValue,
-#raceRpmValue {
+/* §40-41: the generic QWidget 14px rule wins over setFont() in code —
+ * real sizes MUST live here (same pattern as #quadrant* 32px).
+ * Gauge rows are right-anchored, units same size as their values. */
+#raceSpeedValue {
     color: #F5F5F5;
     background: transparent;
-}
-
-/* §40: the generic QWidget 14px rule wins over setFont() in code — real
- * sizes MUST live here (same pattern as #quadrant* 32px). */
-#raceSpeedValue {
-    font-size: 112px;
+    font-size: 88px;
     font-weight: bold;
 }
 
 #raceRpmValue {
-    font-size: 76px;
+    color: #F5F5F5;
+    background: transparent;
+    font-size: 72px;
     font-weight: bold;
 }
 
 #raceSpeedUnit {
-    font-size: 20px;
+    color: #9E9E9E;
+    background: transparent;
+    font-size: 88px;
+}
+
+#raceRpmUnit {
+    color: #9E9E9E;
+    background: transparent;
+    font-size: 72px;
 }
 
 #raceGValue {
@@ -397,12 +404,6 @@ QLabel#soonBadge {
 
 #raceGLabel {
     font-size: 12px;
-}
-
-#raceSpeedUnit,
-#raceRpmValue {
-    color: #9E9E9E;
-    background: transparent;
 }
 
 #raceGValue {
