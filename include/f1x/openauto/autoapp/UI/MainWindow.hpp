@@ -66,6 +66,7 @@ signals:
     void openSettings();
     void toggleCursor();
     void openConnectDialog();
+    void stopAndroidAuto();
 
 public slots:
     void setNightMode(bool on);

@@ -647,10 +647,17 @@ void MainWindow::cancelRaceTransition()
 void MainWindow::onStatusBack()
 {
     // Unified bar back button (§39): Race keeps its short fade home,
-    // other titled pages go home instantly. AA never takes this path.
+    // other titled pages go home instantly.
+    // AA page: must stop the AA session properly (not just switch page),
+    // otherwise video service stays running and causes issues on reconnect.
     if(stack_->currentIndex() == RACE_PAGE)
     {
         this->returnHomeFromRace();
+        return;
+    }
+    if(stack_->currentIndex() == AA_PAGE)
+    {
+        emit stopAndroidAuto();
         return;
     }
     this->showHomePage();
