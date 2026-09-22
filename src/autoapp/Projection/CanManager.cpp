@@ -25,17 +25,10 @@ CanManager::CanManager(boost::asio::io_context& ioService)
     : ioService_(ioService)
 {
 #ifdef USE_CAN
-    // Create CanBridge with a dummy event handler for button events.
-    // The real handlers are registered via registerButtonHandler().
-    // We use *this as the primary handler; button events will be
-    // forwarded to registered handlers only when sessionActive_ is true.
-    struct DummyHandler : public IInputDeviceEventHandler
-    {
-        void onButtonEvent(const ButtonEvent&) override {}
-        void onTouchEvent(const TouchEvent&) override {}
-    };
-    static DummyHandler dummy;
-    canBridge_ = std::make_shared<CanBridge>(dummy,
+    // Primary sink is *this (session-gated buttons); UI stubs (speed, rpm,
+    // night, temp, ignition) flow via HuEvents straight from the bridge.
+    // The bridge is a member: the reference stays valid for its lifetime.
+    canBridge_ = std::make_shared<CanBridge>(*this,
                                              CanBridge::interfaceFromEnv(),
                                              CanBridge::mapPathFromEnv());
     OPENAUTO_LOG(info) << "[CanManager] created, CanBridge ready to start.";
@@ -52,35 +45,31 @@ CanManager::~CanManager()
 void CanManager::start()
 {
 #ifdef USE_CAN
-    if (canBridge_ && !canBridge_->isRunning())
+    // The bridge was built with *this as sink in the ctor: just start it.
+    // (No recreation here — the old code bound a reference to a LOCAL
+    // handler, dangling as soon as start() returned.)
+    if(canBridge_ && !canBridge_->isRunning())
     {
-        // Wrap CanBridge's button events to route via HuEvents for UI,
-        // and to registered handlers only when session is active.
-        struct CanManagerHandler : public IInputDeviceEventHandler
-        {
-            explicit CanManagerHandler(CanManager* manager) : manager_(manager) {}
-            CanManager* manager_;
-            void onButtonEvent(const ButtonEvent& event) override
-            {
-                if (manager_)
-                    manager_->onCanButtonEvent(event);
-            }
-            void onTouchEvent(const TouchEvent&) override {}
-        };
-
-        // Recreate with our handler
-        CanManagerHandler handler{this};
-        canBridge_ = std::make_shared<CanBridge>(handler,
-                                                 CanBridge::interfaceFromEnv(),
-                                                 CanBridge::mapPathFromEnv());
-        OPENAUTO_LOG(info) << "[CanManager] recreated CanBridge with custom handler.";
+        canBridge_->start();
+        OPENAUTO_LOG(info) << "[CanManager] started CanBridge.";
     }
-
-    canBridge_->start();
-    OPENAUTO_LOG(info) << "[CanManager] started CanBridge.";
 #else
     OPENAUTO_LOG(info) << "[CanManager] start (USE_CAN=OFF, no-op).";
 #endif
+}
+
+void CanManager::onButtonEvent(const ButtonEvent& event)
+{
+#ifdef USE_CAN
+    this->onCanButtonEvent(event);
+#else
+    (void)event;
+#endif
+}
+
+void CanManager::onTouchEvent(const TouchEvent& event)
+{
+    (void)event;
 }
 
 void CanManager::stop()

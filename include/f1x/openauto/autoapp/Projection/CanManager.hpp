@@ -95,7 +95,7 @@ using CanManagerButtonCodes = CanBridge::ButtonCodes;
 using CanManagerButtonCodes = std::vector<f1x::aasdk::proto::enums::ButtonCode_Enum>;
 #endif
 
-class CanManager
+class CanManager : public IInputDeviceEventHandler
 {
 public:
     typedef std::shared_ptr<CanManager> Pointer;
@@ -109,6 +109,12 @@ public:
     // Start/stop CAN reading (called at app launch/exit).
     void start();
     void stop();
+
+    // IInputDeviceEventHandler: the primary CanBridge sink. Buttons are
+    // session-gated here (onCanButtonEvent); the manager itself outlives
+    // the bridge (member), so unlike a local handler this never dangles.
+    void onButtonEvent(const ButtonEvent& event) override;
+    void onTouchEvent(const TouchEvent& event) override;
 
     // Register an input handler for button events (InputService/InputSourceService).
     // Called when AA session starts. Returns a token to unregister.

@@ -56,22 +56,27 @@ def send(bus, arb_id, byte0, label=""):
 
 
 def rpm_for_speed(speed_kmh):
-    """Coherent fake gearbox: 5 gears, rpm climbs 1200->6500 inside each gear.
+    """Coherent fake gearbox: 5 gears, rpm climbs inside each gear.
 
-    Pure placeholder so the Race gauge + redline move plausibly with speed.
-    Real W203 RPM frames will replace this after the Quadlock capture.
+    Scaled to fit the PLACEHOLDER 1-byte scale (byte0 = rpm/10, max 2550):
+    1000 -> 2500 per gear, so shifts read as a clear sawtooth on the
+    gauge. Real W203 RPM frames are likely multi-byte and will replace
+    this after the Quadlock capture.
     """
     gear = min(5, 1 + int(speed_kmh) // 26)  # ~0-25:1, 26-51:2, ..., 104+:5
     lo = (gear - 1) * 26
     frac = (speed_kmh - lo) / 26.0 if gear < 5 else (speed_kmh - lo) / 30.0
     frac = max(0.0, min(1.0, frac))
-    return int(1200 + frac * (6500 - 1200))
+    return int(1000 + frac * 1500)
 
 
 def send_speed_rpm(bus, speed):
     send(bus, SPEED_ID, int(speed) & 0xFF, f"speed {speed} km/h")
     rpm = rpm_for_speed(speed)
-    send(bus, RPM_ID, (rpm // 10) & 0xFF, f"rpm {rpm} (byte0=rpm/10)")
+    # CAN byte holds 0-255: clamp (max 2550 rpm in this PLACEHOLDER scale).
+    # Real W203 RPM frames are likely multi-byte (recalibrate on capture).
+    byte0 = min(255, rpm // 10)
+    send(bus, RPM_ID, byte0, f"rpm {rpm} (byte0=rpm/10, clamped {byte0 * 10})")
 
 
 def single_pass(bus):

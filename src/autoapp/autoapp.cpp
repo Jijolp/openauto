@@ -175,6 +175,11 @@ int main(int argc, char* argv[])
 
     // MISSION 1: Create CanManager at app level (shared with App and ServiceFactory)
     auto canManager = std::make_shared<autoapp::projection::CanManager>(ioService);
+    // Race Mode v1 fix: the bridge thread must actually RUN — start it at
+    // launch (UI stubs flow always, buttons stay session-gated inside).
+    // Stopped at shutdown by App::stop(). Without this, no CAN frame
+    // (cansend / sim.py) was ever read.
+    canManager->start();
 
     aasdk::usb::USBWrapper usbWrapper(usbContext);
     aasdk::usb::AccessoryModeQueryFactory queryFactory(usbWrapper, ioService);
