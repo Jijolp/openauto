@@ -302,22 +302,6 @@ QPushButton#centerLogoButton:pressed {
     border: 1px solid #D71920;
 }
 
-/* AA bandeau home button (inside StatusBar, 48px hit) */
-QPushButton#aaHomeButton {
-    background: #17171B;
-    border: 1px solid #2A2A30;
-    border-radius: 8px;
-    padding: 0px;
-}
-QPushButton#aaHomeButton:hover {
-    border: 1px solid #D71920;
-    background: #1E1E24;
-}
-QPushButton#aaHomeButton:pressed {
-    background: #D71920;
-    border: 1px solid #D71920;
-}
-
 /* Mini-cluster AA flottant bas-droite (horloge + temp + signal + logo).
  * Pilule semi-opaque fondue dans la barre AA du bas (au-dessus de la
  * vidéo opaque : pas de fuite compositor). Conteneur + labels
@@ -409,23 +393,26 @@ QLabel#soonBadge {
     letter-spacing: 1.2px;
 }
 
-QPushButton#raceBackButton,
-QPushButton#settingsBackButton,
-QPushButton#carBackButton {
+/* ---- Unified status bar (§39): [back] TITLE left, temp + clock right ---- */
+#statusTitle {
+    color: #F5F5F5;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    background: transparent;
+}
+
+QPushButton#statusBackButton {
     background: #17171B;
     border: 1px solid #2A2A30;
     border-radius: 8px;
     padding: 0px;
 }
-QPushButton#raceBackButton:hover,
-QPushButton#settingsBackButton:hover,
-QPushButton#carBackButton:hover {
+QPushButton#statusBackButton:hover {
     border: 1px solid #D71920;
     background: #1E1E24;
 }
-QPushButton#raceBackButton:pressed,
-QPushButton#settingsBackButton:pressed,
-QPushButton#carBackButton:pressed {
+QPushButton#statusBackButton:pressed {
     background: #D71920;
     border: 1px solid #D71920;
 }

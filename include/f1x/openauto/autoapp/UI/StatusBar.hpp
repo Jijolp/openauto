@@ -1,9 +1,10 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2b head-unit status band: clock + placeholders. Lives INSIDE the
-*  single MainWindow, fixed above the page stack on every page.
-*  UI-2b: shows real temp_ext when available, AA home button (48px) on
-*  the right that returns to home without forwarding to the video.)
+*  (UI head-unit status band: unified bar (§39). Home layout unchanged
+*  (clock | temp | ... | NO SIG); titled pages (Race/Voiture/Paramètres)
+*  show [back logo] title on the left and temp + clock on the right, no
+*  signal. AA page keeps only its floating logo button (bar hidden).
+*  Local per-page bandeaux were removed to free content space.)
 */
 
 #pragma once
@@ -12,6 +13,7 @@
 #include <QTimer>
 #include <QWidget>
 
+class QHBoxLayout;
 class QPushButton;
 
 namespace f1x
@@ -34,10 +36,11 @@ public:
     void setNightMode(bool on);
     void setTemp(int tempC);
     void setTempPlaceholder();
-    void setAaMode(bool on);
+    // Empty title = home layout; non-empty = titled page layout.
+    void setTitle(const QString& title);
 
 signals:
-    void aaHomeClicked();
+    void backClicked();
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -46,14 +49,17 @@ private slots:
     void updateClock();
 
 private:
+    void relayout(bool titled);
+
+    QHBoxLayout* layout_;
     QLabel* labelClock_;
     QLabel* labelTemp_;
     QLabel* labelSignal_;
-    QPushButton* aaButton_;
-    MercedesLogo* aaLogo_;
+    QPushButton* backButton_;
+    MercedesLogo* backLogo_;
+    QLabel* titleLabel_;
     QTimer* timer_;
     bool night_;
-    bool aaMode_;
 };
 
 }

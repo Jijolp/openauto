@@ -302,22 +302,6 @@ QPushButton#centerLogoButton:pressed {
     border: 1px solid #7A0F14;
 }
 
-/* AA bandeau home button (inside StatusBar, 48px hit) */
-QPushButton#aaHomeButton {
-    background: #050506;
-    border: 1px solid #1C1C20;
-    border-radius: 8px;
-    padding: 0px;
-}
-QPushButton#aaHomeButton:hover {
-    border: 1px solid #7A0F14;
-    background: #0A0A0C;
-}
-QPushButton#aaHomeButton:pressed {
-    background: #7A0F14;
-    border: 1px solid #7A0F14;
-}
-
 /* Mini-cluster AA flottant bas-droite (cf. theme.qss ; déjà noir). */
 #aaCluster {
     background-color: rgba(5, 5, 6, 215);
@@ -406,23 +390,26 @@ QLabel#soonBadge {
     letter-spacing: 1.2px;
 }
 
-QPushButton#raceBackButton,
-QPushButton#settingsBackButton,
-QPushButton#carBackButton {
+/* ---- Unified status bar (§39): [back] TITLE left, temp + clock right ---- */
+#statusTitle {
+    color: #C9C9C9;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+    background: transparent;
+}
+
+QPushButton#statusBackButton {
     background: #050506;
     border: 1px solid #1C1C20;
     border-radius: 8px;
     padding: 0px;
 }
-QPushButton#raceBackButton:hover,
-QPushButton#settingsBackButton:hover,
-QPushButton#carBackButton:hover {
+QPushButton#statusBackButton:hover {
     border: 1px solid #7A0F14;
     background: #0A0A0C;
 }
-QPushButton#raceBackButton:pressed,
-QPushButton#settingsBackButton:pressed,
-QPushButton#carBackButton:pressed {
+QPushButton#statusBackButton:pressed {
     background: #7A0F14;
     border: 1px solid #7A0F14;
 }

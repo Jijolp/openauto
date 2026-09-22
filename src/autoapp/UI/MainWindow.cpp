@@ -25,6 +25,7 @@
 #include <QStackedWidget>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QWidget>
 #include <QGridLayout>
 #include <QScrollArea>
 #include <QFrame>
@@ -115,11 +116,9 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , gaugePanel_(nullptr)
     , gforcePanel_(nullptr)
     , gsim_(nullptr)
-    , raceBackButton_(nullptr)
     , navEffect_(nullptr)
     , gaugeEffect_(nullptr)
     , gforceEffect_(nullptr)
-    , raceBackEffect_(nullptr)
     , raceTransitionGen_(0)
     , raceTransitionActive_(false)
     , aaSessionActive_(false)
@@ -167,7 +166,7 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     stack_->setCurrentIndex(HOME_PAGE);
     this->layoutStatusOverlay();
     HuEvents::setAaPageActive(false);
-    statusBar_->setAaMode(false);
+    statusBar_->setTitle(QString());
 
     HuEvents::setVideoHost(aaPage_);
     HuEvents::setStatusBar(statusBar_);
@@ -215,7 +214,7 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     connect(&HuEvents::instance(), &HuEvents::nightModeChanged, this, &MainWindow::setNightMode);
     connect(&HuEvents::instance(), &HuEvents::tempExtChanged, this, &MainWindow::onTempExt);
     connect(&HuEvents::instance(), &HuEvents::ignitionChanged, this, &MainWindow::onIgnition);
-    connect(statusBar_, &StatusBar::aaHomeClicked, this, &MainWindow::showHomePage);
+    connect(statusBar_, &StatusBar::backClicked, this, &MainWindow::onStatusBack);
     connect(splash_, &SplashOverlay::shrinkStarted, this, &MainWindow::onSplashShrinkStarted);
     connect(splash_, &SplashOverlay::finished, this, &MainWindow::onSplashFinished);
     connect(screenOff_, &ScreenOffOverlay::wakeRequested, this, &MainWindow::onScreenOffWake);
@@ -274,7 +273,7 @@ void MainWindow::showHomePage()
     }
     stack_->setCurrentIndex(HOME_PAGE);
     HuEvents::setAaPageActive(false);
-    statusBar_->setAaMode(false);
+    statusBar_->setTitle(QString());
     statusBar_->show();
     if(aaCluster_ != nullptr)
     {
@@ -315,7 +314,7 @@ void MainWindow::showSettingsPage()
     }
     stack_->setCurrentIndex(SETTINGS_PAGE);
     HuEvents::setAaPageActive(false);
-    statusBar_->setAaMode(false);
+    statusBar_->setTitle(QStringLiteral("PARAMÈTRES"));
     statusBar_->show();
     if(aaCluster_ != nullptr)
     {
@@ -342,8 +341,8 @@ void MainWindow::directShowRace()
 {
     stack_->setCurrentIndex(RACE_PAGE);
     HuEvents::setAaPageActive(false);
-    // AA session stays indicated (status-bar logo button) while on Race.
-    statusBar_->setAaMode(aaSessionActive_);
+    // Unified bar (§39): [back logo] MODE RACE left, temp + clock right.
+    statusBar_->setTitle(QStringLiteral("MODE RACE"));
     statusBar_->show();
     if(aaCluster_ != nullptr)
     {
@@ -365,18 +364,44 @@ void MainWindow::trackRaceAnim(QPropertyAnimation* anim)
 
 void MainWindow::startRaceTransition()
 {
-    // Signature (retravaillée) : le logo central tourne 720° + rougit +
-    // GROSSIT énormément (OutCubic ~700ms) pendant que les 4 quadrants
-    // sortent + fade out (~450ms ease-in) ; PUIS le logo fade out (~300ms)
-    // et libère l'interface pendant que les panneaux entrent en stagger.
-    // Robustesse inchangée (BUILD_NOTES §36) : slide pos best-effort sur
-    // widgets layout-managés, fade garanti. AA auto-switch préemptif :
-    // onVideoStarted() annule tout.
+    // Signature (round 3) : le logo central tourne 720° + rougit pendant
+    // que son BOUTON grandit énormément (géométrie, OutCubic ~700ms) et
+    // que les 4 quadrants sortent + fade out (~450ms ease-in) ; PUIS le
+    // bouton fade out (~300ms) et libère l'interface pendant que les
+    // panneaux entrent en stagger. Le logo SEUL ne peut pas grandir : il
+    // est rogné par son bouton circulaire 180px — d'où le grow du bouton
+    // (position absolue, hors layout) + taille du logo dedans, fond et
+    // bordure rendus transparents le temps du geste. AA auto-switch
+    // préemptif : onVideoStarted() annule tout.
     raceTransitionActive_ = true;
     const int gen = ++raceTransitionGen_;
 
-    if(centerLogo_ != nullptr)
+    if(centerHit_ != nullptr && centerLogo_ != nullptr)
     {
+        // Release the 180px fixed sizes (resize/geometry would clamp).
+        raceLogoOrigGeom_ = centerHit_->geometry();
+        centerHit_->setMinimumSize(0, 0);
+        centerHit_->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        centerLogo_->setMinimumSize(0, 0);
+        centerLogo_->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        centerHit_->setStyleSheet(QStringLiteral("background:transparent;border:none;"));
+        const int grown = qRound(UiConstants::LOGO_HOME_SIZE * UiConstants::RACE_LOGO_GROW);
+        const QPoint c = raceLogoOrigGeom_.center();
+        const QRect grownGeom(c.x() - grown / 2, c.y() - grown / 2, grown, grown);
+        auto* growBtn = new QPropertyAnimation(centerHit_, "geometry", this);
+        growBtn->setDuration(UiConstants::RACE_LOGO_SPIN_MS);
+        growBtn->setStartValue(raceLogoOrigGeom_);
+        growBtn->setEndValue(grownGeom);
+        growBtn->setEasingCurve(QEasingCurve::OutCubic);
+        growBtn->start(QAbstractAnimation::DeleteWhenStopped);
+        this->trackRaceAnim(growBtn);
+        auto* growLogo = new QPropertyAnimation(centerLogo_, "size", this);
+        growLogo->setDuration(UiConstants::RACE_LOGO_SPIN_MS);
+        growLogo->setStartValue(QSize(UiConstants::LOGO_HOME_SIZE, UiConstants::LOGO_HOME_SIZE));
+        growLogo->setEndValue(QSize(grown, grown));
+        growLogo->setEasingCurve(QEasingCurve::OutCubic);
+        growLogo->start(QAbstractAnimation::DeleteWhenStopped);
+        this->trackRaceAnim(growLogo);
         centerLogo_->setRotationAngle(0.0);
         auto* spin = new QPropertyAnimation(centerLogo_, "rotationAngle", this);
         spin->setDuration(UiConstants::RACE_LOGO_SPIN_MS);
@@ -392,24 +417,17 @@ void MainWindow::startRaceTransition()
         tint->setEasingCurve(QEasingCurve::OutCubic);
         tint->start(QAbstractAnimation::DeleteWhenStopped);
         this->trackRaceAnim(tint);
-        auto* grow = new QPropertyAnimation(centerLogo_, "scaleFactor", this);
-        grow->setDuration(UiConstants::RACE_LOGO_SPIN_MS);
-        grow->setStartValue(1.0);
-        grow->setEndValue(UiConstants::RACE_LOGO_GROW);
-        grow->setEasingCurve(QEasingCurve::OutCubic);
-        grow->start(QAbstractAnimation::DeleteWhenStopped);
-        this->trackRaceAnim(grow);
-        // Fade-out piloté à la phase suivante : effet créé ici s'il
-        // manque (mode NO_SPLASH n'en met pas sur le logo central).
-        if(centerLogo_->graphicsEffect() == nullptr)
+        // Fade-out target = the whole button (phase 2). Effect created
+        // here if missing.
+        if(centerHit_->graphicsEffect() == nullptr)
         {
-            auto* logoEff = new QGraphicsOpacityEffect(centerLogo_);
-            logoEff->setOpacity(1.0);
-            centerLogo_->setGraphicsEffect(logoEff);
+            auto* btnEff = new QGraphicsOpacityEffect(centerHit_);
+            btnEff->setOpacity(1.0);
+            centerHit_->setGraphicsEffect(btnEff);
         }
-        else if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+        else if(auto* btnEff = qobject_cast<QGraphicsOpacityEffect*>(centerHit_->graphicsEffect()))
         {
-            logoEff->setOpacity(1.0);
+            btnEff->setOpacity(1.0);
         }
     }
 
@@ -451,12 +469,13 @@ void MainWindow::startRaceTransition()
         {
             return;
         }
-        // Phase 2 : le logo géant (rouge) fade out et libère l'interface.
-        if(centerLogo_ != nullptr)
+        // Phase 2 : le bouton géant (logo rouge) fade out et libère
+        // l'interface.
+        if(centerHit_ != nullptr)
         {
-            if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+            if(auto* btnEff = qobject_cast<QGraphicsOpacityEffect*>(centerHit_->graphicsEffect()))
             {
-                auto* fade = new QPropertyAnimation(logoEff, "opacity", this);
+                auto* fade = new QPropertyAnimation(btnEff, "opacity", this);
                 fade->setDuration(UiConstants::RACE_LOGO_FADE_MS);
                 fade->setStartValue(1.0);
                 fade->setEndValue(0.0);
@@ -475,6 +494,29 @@ void MainWindow::startRaceTransition()
     });
 }
 
+void MainWindow::restoreCenterButton()
+{
+    if(centerHit_ == nullptr || centerLogo_ == nullptr)
+    {
+        return;
+    }
+    if(!raceLogoOrigGeom_.isNull())
+    {
+        centerHit_->setGeometry(raceLogoOrigGeom_);
+    }
+    centerHit_->setFixedSize(UiConstants::LOGO_HOME_SIZE, UiConstants::LOGO_HOME_SIZE);
+    centerHit_->setStyleSheet(QString());
+    if(auto* btnEff = qobject_cast<QGraphicsOpacityEffect*>(centerHit_->graphicsEffect()))
+    {
+        btnEff->setOpacity(1.0);
+    }
+    centerLogo_->setFixedSize(UiConstants::LOGO_HOME_SIZE, UiConstants::LOGO_HOME_SIZE);
+    centerLogo_->move(0, 0);
+    centerLogo_->setRotationAngle(0.0);
+    centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
+    centerLogo_->setScaleFactor(1.0);
+}
+
 void MainWindow::finishRaceEntry(int gen)
 {
     this->directShowRace();
@@ -489,29 +531,8 @@ void MainWindow::finishRaceEntry(int gen)
         }
     }
     raceQuadOrigPos_.clear();
-    if(centerLogo_ != nullptr)
-    {
-        // Central (géant, rouge, faded out) hands over to the 48px bandeau
-        // button: reset invisibly (home page hidden) for the next visit.
-        centerLogo_->setRotationAngle(0.0);
-        centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-        centerLogo_->setScaleFactor(1.0);
-        if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
-        {
-            logoEff->setOpacity(1.0);
-        }
-    }
-    if(raceBackEffect_ != nullptr)
-    {
-        raceBackEffect_->setOpacity(0.0);
-        auto* fade = new QPropertyAnimation(raceBackEffect_, "opacity", this);
-        fade->setDuration(UiConstants::RACE_BACK_FADE_MS);
-        fade->setStartValue(0.0);
-        fade->setEndValue(1.0);
-        fade->setEasingCurve(QEasingCurve::OutCubic);
-        fade->start(QAbstractAnimation::DeleteWhenStopped);
-        this->trackRaceAnim(fade);
-    }
+    // Central button (giant, red, faded out) reset invisibly for next time.
+    this->restoreCenterButton();
     this->animateRacePanelsIn(gen);
 }
 
@@ -603,22 +624,13 @@ void MainWindow::cancelRaceTransition()
         }
     }
     raceQuadOrigPos_.clear();
-    if(centerLogo_ != nullptr)
-    {
-        centerLogo_->setRotationAngle(0.0);
-        centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-        centerLogo_->setScaleFactor(1.0);
-        if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
-        {
-            logoEff->setOpacity(1.0);
-        }
-    }
+    this->restoreCenterButton();
     // Snap race panels back (layout re-asserts managed geometry) + opaque.
     if(racePage_ != nullptr && racePage_->layout() != nullptr)
     {
         racePage_->layout()->activate();
     }
-    for(auto* eff : {navEffect_, gaugeEffect_, gforceEffect_, raceBackEffect_})
+    for(auto* eff : {navEffect_, gaugeEffect_, gforceEffect_})
     {
         if(eff != nullptr)
         {
@@ -631,9 +643,20 @@ void MainWindow::cancelRaceTransition()
     }
 }
 
-void MainWindow::returnHomeFromRace()
+void MainWindow::onStatusBack()
 {
-    // Return = short 250ms fade of the race page (documented choice: the
+    // Unified bar back button (§39): Race keeps its short fade home,
+    // other titled pages go home instantly. AA never takes this path.
+    if(stack_->currentIndex() == RACE_PAGE)
+    {
+        this->returnHomeFromRace();
+        return;
+    }
+    this->showHomePage();
+}
+
+void MainWindow::returnHomeFromRace()
+{    // Return = short 250ms fade of the race page (documented choice: the
     // full inverse choreography is not worth the fragility — see §36).
     // AA auto-switch never takes this path: it stays instant.
     if(raceTransitionActive_ || stack_->currentIndex() != RACE_PAGE)
@@ -675,7 +698,7 @@ void MainWindow::showCarPage()
     }
     stack_->setCurrentIndex(CAR_PAGE);
     HuEvents::setAaPageActive(false);
-    statusBar_->setAaMode(false);
+    statusBar_->setTitle(QStringLiteral("VOITURE"));
     statusBar_->show();
     if(aaCluster_ != nullptr)
     {
@@ -1032,23 +1055,6 @@ QWidget* MainWindow::buildAAPage()
     return aaPage_;
 }
 
-QWidget* MainWindow::buildPageBandeau(const QString& title, const char* backObjName)
-{
-    auto* bandeau = new QWidget();
-    bandeau->setObjectName(QStringLiteral("pageBandeau"));
-    auto* bandLayout = new QHBoxLayout(bandeau);
-    bandLayout->setContentsMargins(0, 0, 0, 0);
-    bandLayout->setSpacing(12);
-    auto* titleLabel = makeTitle(title);
-    titleLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    bandLayout->addWidget(titleLabel, 1);
-    auto* backBtn = makeLogoBackButton(bandeau, UiConstants::SETTINGS_BACK_BUTTON_SIZE,
-                                       UiConstants::SETTINGS_BACK_ICON_SIZE, backObjName);
-    connect(backBtn, &QPushButton::clicked, this, &MainWindow::showHomePage);
-    bandLayout->addWidget(backBtn);
-    return bandeau;
-}
-
 QWidget* MainWindow::buildSettingsPage()
 {
     settingsPage_ = new QWidget(this);
@@ -1061,8 +1067,8 @@ QWidget* MainWindow::buildSettingsPage()
                                UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
     layout->setSpacing(8);
 
-    layout->addWidget(this->buildPageBandeau(QStringLiteral("PARAMÈTRES"), "settingsBackButton"));
-
+    // Title + back live in the unified status bar (§39) — no local
+    // bandeau, the content keeps the freed space.
     // Item3: software version, so a human can check the running binary
     // is the latest build (UiConstants::APP_VERSION + compile date).
     auto* version = makeSubtitle(QStringLiteral("Version logicielle : v%1 (build %2)")
@@ -1113,26 +1119,8 @@ QWidget* MainWindow::buildRacePage()
                                UiConstants::RACE_OUTER_MARGIN, UiConstants::RACE_OUTER_MARGIN);
     layout->setSpacing(UiConstants::RACE_GRID_SPACING);
 
-    // Local bandeau (Paramètres pattern, 48px logo back button) — the
-    // signature transition hands the spinning central logo over to this
-    // button (fade-in, geometric migration judged too fragile — §36).
-    auto* bandeau = new QWidget(racePage_);
-    bandeau->setObjectName(QStringLiteral("pageBandeau"));
-    auto* bandLayout = new QHBoxLayout(bandeau);
-    bandLayout->setContentsMargins(0, 0, 0, 0);
-    bandLayout->setSpacing(12);
-    auto* titleLabel = makeTitle(QStringLiteral("MODE RACE"));
-    titleLabel->setAlignment(Qt::AlignVCenter | Qt::AlignLeft);
-    bandLayout->addWidget(titleLabel, 1);
-    raceBackButton_ = makeLogoBackButton(bandeau, UiConstants::SETTINGS_BACK_BUTTON_SIZE,
-                                         UiConstants::SETTINGS_BACK_ICON_SIZE, "raceBackButton");
-    connect(raceBackButton_, &QPushButton::clicked, this, &MainWindow::returnHomeFromRace);
-    bandLayout->addWidget(raceBackButton_);
-    raceBackEffect_ = new QGraphicsOpacityEffect(raceBackButton_);
-    raceBackEffect_->setOpacity(1.0);
-    raceBackButton_->setGraphicsEffect(raceBackEffect_);
-    layout->addWidget(bandeau);
-
+    // Title + back live in the unified status bar (§39) — no local
+    // bandeau, the grid takes the freed space.
     // Grid: left NavPanel (~58%, full height) | right column (gauge top,
     // G bottom). Gaps/margins from UiConstants, panels #17171B radius 6.
     auto* content = new QWidget(racePage_);
@@ -1185,25 +1173,11 @@ QWidget* MainWindow::buildCarPage()
                                UiConstants::STATUS_BAR_HEIGHT + UiConstants::HOME_OUTER_MARGIN,
                                UiConstants::HOME_OUTER_MARGIN, UiConstants::HOME_OUTER_MARGIN);
     layout->setSpacing(8);
-    layout->addWidget(this->buildPageBandeau(QStringLiteral("VOITURE"), "carBackButton"));
+    // Title + back live in the unified status bar (§39).
     layout->addStretch();
     layout->addWidget(makeSubtitle(QStringLiteral("EN CONSTRUCTION — réglages véhicule à venir.")));
     layout->addStretch();
     return carPage_;
-}
-
-QPushButton* MainWindow::makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName)
-{
-    auto* btn = new QPushButton(parent);
-    btn->setObjectName(QString::fromLatin1(objName));
-    btn->setFixedSize(size, size);
-    btn->setFlat(true);
-    btn->setFocusPolicy(Qt::NoFocus);
-    btn->setCursor(Qt::PointingHandCursor);
-    auto* logo = new MercedesLogo(btn, iconSize);
-    logo->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    logo->move((size - iconSize) / 2, (size - iconSize) / 2);
-    return btn;
 }
 
 void MainWindow::animateQuadrantsIn()

@@ -1,6 +1,6 @@
 /*
 *  This file is part of openauto project.
-*  (UI-2b head-unit status band.)
+*  (UI head-unit status band: unified bar implementation. See header.)
 */
 
 #include <QHBoxLayout>
@@ -22,14 +22,15 @@ namespace ui
 
 StatusBar::StatusBar(QWidget* parent)
     : QWidget(parent)
+    , layout_(new QHBoxLayout(this))
     , labelClock_(new QLabel(this))
     , labelTemp_(new QLabel(QStringLiteral("--°"), this))
     , labelSignal_(new QLabel(QStringLiteral("NO SIG"), this))
-    , aaButton_(new QPushButton(this))
-    , aaLogo_(new MercedesLogo(aaButton_, UiConstants::LOGO_AA_ICON_SIZE))
+    , backButton_(new QPushButton(this))
+    , backLogo_(new MercedesLogo(backButton_, UiConstants::STATUS_BACK_ICON_SIZE))
+    , titleLabel_(new QLabel(this))
     , timer_(new QTimer(this))
     , night_(false)
-    , aaMode_(false)
 {
     setFocusPolicy(Qt::NoFocus);
     setFixedHeight(UiConstants::STATUS_BAR_HEIGHT);
@@ -38,26 +39,36 @@ StatusBar::StatusBar(QWidget* parent)
     labelTemp_->setObjectName(QStringLiteral("labelTemp"));
     labelSignal_->setObjectName(QStringLiteral("labelSignal"));
 
-    aaButton_->setObjectName(QStringLiteral("aaHomeButton"));
-    aaButton_->setFixedSize(UiConstants::LOGO_AA_BUTTON_SIZE, UiConstants::STATUS_BAR_HEIGHT);
-    aaButton_->setFocusPolicy(Qt::NoFocus);
-    aaButton_->setCursor(Qt::PointingHandCursor);
-    aaLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
-    aaLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-    aaLogo_->move((aaButton_->width() - aaLogo_->width()) / 2,
-                  (aaButton_->height() - aaLogo_->height()) / 2);
-    connect(aaButton_, &QPushButton::clicked, this, &StatusBar::aaHomeClicked);
-    aaButton_->setVisible(false);
+    backButton_->setObjectName(QStringLiteral("statusBackButton"));
+    backButton_->setFixedSize(UiConstants::STATUS_BACK_BUTTON_SIZE, UiConstants::STATUS_BACK_BUTTON_SIZE);
+    backButton_->setFlat(true);
+    backButton_->setFocusPolicy(Qt::NoFocus);
+    backButton_->setCursor(Qt::PointingHandCursor);
+    backLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    backLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
+    backLogo_->move((backButton_->width() - backLogo_->width()) / 2,
+                    (backButton_->height() - backLogo_->height()) / 2);
+    connect(backButton_, &QPushButton::clicked, this, &StatusBar::backClicked);
+    connect(backButton_, &QPushButton::pressed, this, [this]() { backLogo_->setActive(true); });
+    connect(backButton_, &QPushButton::released, this, [this]() { backLogo_->setActive(false); });
+    backButton_->hide();
 
-    auto* layout = new QHBoxLayout(this);
-    layout->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
-                               UiConstants::STATUS_BAR_MARGIN, 0);
-    layout->setSpacing(8);
-    layout->addWidget(labelClock_);
-    layout->addWidget(labelTemp_);
-    layout->addStretch();
-    layout->addWidget(labelSignal_);
-    layout->addWidget(aaButton_);
+    titleLabel_->setObjectName(QStringLiteral("statusTitle"));
+    QFont titleFont(QStringLiteral("Inter"));
+    titleFont.setPixelSize(UiConstants::STATUS_TITLE_FONT_SIZE);
+    titleFont.setWeight(QFont::DemiBold);
+    titleFont.setLetterSpacing(QFont::PercentageSpacing, UiConstants::QUADRANT_LABEL_SPACING_PCT);
+    titleLabel_->setFont(titleFont);
+    titleLabel_->hide();
+
+    layout_->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
+                                UiConstants::STATUS_BAR_MARGIN, 0);
+    layout_->setSpacing(8);
+    // Home layout (unchanged): clock | temp | ... | NO SIG.
+    layout_->addWidget(labelClock_);
+    layout_->addWidget(labelTemp_);
+    layout_->addStretch();
+    layout_->addWidget(labelSignal_);
 
     connect(timer_, &QTimer::timeout, this, &StatusBar::updateClock);
     timer_->start(1000);
@@ -83,13 +94,44 @@ void StatusBar::setTempPlaceholder()
     labelTemp_->setText(QStringLiteral("--°"));
 }
 
-void StatusBar::setAaMode(bool on)
+void StatusBar::setTitle(const QString& title)
 {
-    if(aaMode_ != on)
+    const bool titled = !title.isEmpty();
+    if(titled)
     {
-        aaMode_ = on;
-        aaButton_->setVisible(on);
+        titleLabel_->setText(title.toUpper());
     }
+    backButton_->setVisible(titled);
+    titleLabel_->setVisible(titled);
+    labelSignal_->setVisible(!titled);
+    this->relayout(titled);
+}
+
+void StatusBar::relayout(bool titled)
+{
+    // Reorder the same widgets (takeAt releases, never deletes widgets;
+    // spacers are deleted). Home order is byte-identical to the ctor.
+    QLayoutItem* item = nullptr;
+    while((item = layout_->takeAt(0)) != nullptr)
+    {
+        if(item->widget() == nullptr)
+        {
+            delete item;
+        }
+    }
+    if(!titled)
+    {
+        layout_->addWidget(labelClock_);
+        layout_->addWidget(labelTemp_);
+        layout_->addStretch();
+        layout_->addWidget(labelSignal_);
+        return;
+    }
+    layout_->addWidget(backButton_);
+    layout_->addWidget(titleLabel_);
+    layout_->addStretch();
+    layout_->addWidget(labelTemp_);
+    layout_->addWidget(labelClock_);
 }
 
 void StatusBar::paintEvent(QPaintEvent*)

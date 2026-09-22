@@ -81,6 +81,7 @@ private slots:
     void showScreenOff();
     void hideScreenOff();
     void returnHomeFromRace();
+    void onStatusBack();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -101,14 +102,10 @@ private:
     QWidget* buildSettingsPage();
     QWidget* buildRacePage();
     QWidget* buildCarPage();
-    // Shared page bandeau: left title + right logo back button → home.
-    // (Item4: pages start below the floating status overlay.)
-    QWidget* buildPageBandeau(const QString& title, const char* backObjName);
     void animateQuadrantsIn();
     void positionCenterLogo();
     void layoutStatusOverlay();
     void layoutAaCluster();
-    static QPushButton* makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName);
     // Race Mode v1 transition (signature entry via MODE RACE quadrant).
     // OPENAUTO_NO_ANIM=1 skips straight to the page (dev).
     void startRaceTransition();
@@ -117,6 +114,9 @@ private:
     void cancelRaceTransition();
     void directShowRace();
     void trackRaceAnim(QPropertyAnimation* anim);
+    // Snap the central logo button back to its 180px medallion state
+    // (geometry, fixed sizes, QSS style, opacity, logo color/rotation).
+    void restoreCenterButton();
 
     StatusBar* statusBar_;
     QStackedWidget* stack_;
@@ -149,17 +149,18 @@ private:
     GaugePanel* gaugePanel_;
     GForcePanel* gforcePanel_;
     GSim* gsim_;
-    QPushButton* raceBackButton_;
     QGraphicsOpacityEffect* navEffect_;
     QGraphicsOpacityEffect* gaugeEffect_;
     QGraphicsOpacityEffect* gforceEffect_;
-    QGraphicsOpacityEffect* raceBackEffect_;
     // Signature entry transition state. Bumped on every cancel/finish so
     // stale singleShots no-op; AA auto-switch always wins (cancel first).
     int raceTransitionGen_;
     bool raceTransitionActive_;
     bool aaSessionActive_;
     QMap<QWidget*, QPoint> raceQuadOrigPos_;
+    // Central logo button geometry before the grow (fixed 180px released
+    // for the animation, restored after — see startRaceTransition).
+    QRect raceLogoOrigGeom_;
     std::vector<QPropertyAnimation*> raceAnims_;
 
     // P2: existing OpenAuto config embedded in the settings page.
