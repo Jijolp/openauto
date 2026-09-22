@@ -364,3 +364,64 @@ QLabel#soonBadge {
     background: transparent;
     padding: 2px 6px;
 }
+
+/* ---- Race Mode v1 (night — pure black, dimmed, cf. theme.qss) ---- */
+#racePage {
+    background-color: #000000;
+}
+
+#navPanel,
+#gaugePanel,
+#gforcePanel {
+    background-color: #050506;
+    border: 1px solid #1C1C20;
+    border-radius: 6px;
+}
+
+#navVideoSlot {
+    background: transparent;
+}
+
+#raceSpeedValue {
+    color: #C9C9C9;
+    background: transparent;
+}
+
+#raceSpeedUnit,
+#raceRpmValue {
+    color: #6E6E6E;
+    background: transparent;
+}
+
+#raceGValue {
+    color: #C9C9C9;
+    background: transparent;
+}
+
+#raceGLabel,
+#navTitle {
+    color: #6E6E6E;
+    background: transparent;
+    letter-spacing: 1.2px;
+}
+
+QPushButton#raceBackButton,
+QPushButton#settingsBackButton,
+QPushButton#carBackButton {
+    background: #050506;
+    border: 1px solid #1C1C20;
+    border-radius: 8px;
+    padding: 0px;
+}
+QPushButton#raceBackButton:hover,
+QPushButton#settingsBackButton:hover,
+QPushButton#carBackButton:hover {
+    border: 1px solid #7A0F14;
+    background: #0A0A0C;
+}
+QPushButton#raceBackButton:pressed,
+QPushButton#settingsBackButton:pressed,
+QPushButton#carBackButton:pressed {
+    background: #7A0F14;
+    border: 1px solid #7A0F14;
+}

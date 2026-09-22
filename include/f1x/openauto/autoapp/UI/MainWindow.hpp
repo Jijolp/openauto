@@ -15,6 +15,11 @@
 
 #include <QMainWindow>
 
+#include <vector>
+#include <QMap>
+#include <QPoint>
+#include <QPropertyAnimation>
+
 class QLabel;
 class QPushButton;
 class QStackedWidget;
@@ -33,6 +38,10 @@ class StatusBar;
 class SplashOverlay;
 class ScreenOffOverlay;
 class MercedesLogo;
+class NavPanel;
+class GaugePanel;
+class GForcePanel;
+class GSim;
 
 // UI-2b: Nothing/Mercedes design — splash + home quadrants around
 // central logo + AA bandeau button + screen-off + auto-switch.
@@ -71,6 +80,7 @@ private slots:
     void onScreenOffWake();
     void showScreenOff();
     void hideScreenOff();
+    void returnHomeFromRace();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
@@ -99,6 +109,14 @@ private:
     void layoutStatusOverlay();
     void layoutAaCluster();
     static QPushButton* makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName);
+    // Race Mode v1 transition (signature entry via MODE RACE quadrant).
+    // OPENAUTO_NO_ANIM=1 skips straight to the page (dev).
+    void startRaceTransition();
+    void finishRaceEntry(int gen);
+    void animateRacePanelsIn(int gen);
+    void cancelRaceTransition();
+    void directShowRace();
+    void trackRaceAnim(QPropertyAnimation* anim);
 
     StatusBar* statusBar_;
     QStackedWidget* stack_;
@@ -125,6 +143,24 @@ private:
     QWidget* centerHit_;
     MercedesLogo* centerLogo_;
     std::vector<QGraphicsOpacityEffect*> quadrantEffects_;
+
+    // Race Mode v1 page (nav 58% | gauge/G 42%) + G simulator.
+    NavPanel* navPanel_;
+    GaugePanel* gaugePanel_;
+    GForcePanel* gforcePanel_;
+    GSim* gsim_;
+    QPushButton* raceBackButton_;
+    QGraphicsOpacityEffect* navEffect_;
+    QGraphicsOpacityEffect* gaugeEffect_;
+    QGraphicsOpacityEffect* gforceEffect_;
+    QGraphicsOpacityEffect* raceBackEffect_;
+    // Signature entry transition state. Bumped on every cancel/finish so
+    // stale singleShots no-op; AA auto-switch always wins (cancel first).
+    int raceTransitionGen_;
+    bool raceTransitionActive_;
+    bool aaSessionActive_;
+    QMap<QWidget*, QPoint> raceQuadOrigPos_;
+    std::vector<QPropertyAnimation*> raceAnims_;
 
     // P2: existing OpenAuto config embedded in the settings page.
     QWidget* embeddedSettings_;
