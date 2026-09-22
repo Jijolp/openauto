@@ -132,6 +132,10 @@ void StatusBar::relayout(bool titled)
     }
     if(!titled)
     {
+        // Home layout: back logo | clock | temp | ... | NO SIG
+        // Add small spacing between back logo and clock to avoid overlap.
+        layout_->addWidget(backButton_, 0, Qt::AlignVCenter);
+        layout_->addSpacing(10);
         layout_->addWidget(labelClock_, 0, Qt::AlignVCenter);
         layout_->addWidget(labelTemp_, 0, Qt::AlignVCenter);
         layout_->addStretch();
