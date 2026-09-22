@@ -382,7 +382,8 @@ QLabel#soonBadge {
     background: transparent;
 }
 
-#raceSpeedValue {
+#raceSpeedValue,
+#raceRpmValue {
     color: #C9C9C9;
     background: transparent;
 }

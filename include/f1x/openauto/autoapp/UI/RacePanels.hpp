@@ -40,30 +40,12 @@ private:
     QWidget* videoSlot_;
 };
 
-// Horizontal RPM band with redline from ~75% (UiConstants).
-class RpmBar : public QWidget
-{
-    Q_OBJECT
-public:
-    explicit RpmBar(QWidget* parent = nullptr);
-    void setRpm(double rpm);
-    void setNightMode(bool on);
-
-protected:
-    void paintEvent(QPaintEvent* event) override;
-
-private:
-    double rpm_;
-    bool night_;
-};
-
-// Speed in very big figures + discreet unit + RPM band below.
+// Speed + RPM as raw giant figures (human choice: no bar/arc).
 class GaugePanel : public QFrame
 {
     Q_OBJECT
 public:
     explicit GaugePanel(QWidget* parent = nullptr);
-    void setNightMode(bool on);
 
 public slots:
     void setSpeed(double kmh);
@@ -72,7 +54,6 @@ public slots:
 private:
     QLabel* speedValue_;
     QLabel* rpmValue_;
-    RpmBar* rpmBar_;
 };
 
 // Concentric G scope (0.5g / 1.0g rings) + smoothed red dot.

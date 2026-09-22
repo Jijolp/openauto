@@ -79,88 +79,30 @@ QWidget* NavPanel::videoSlot()
     return videoSlot_;
 }
 
-RpmBar::RpmBar(QWidget* parent)
-    : QWidget(parent)
-    , rpm_(0.0)
-    , night_(false)
-{
-    this->setObjectName(QStringLiteral("rpmBar"));
-    this->setFixedHeight(UiConstants::RACE_RPM_BAR_HEIGHT);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-}
-
-void RpmBar::setRpm(double rpm)
-{
-    rpm_ = qBound(0.0, rpm, static_cast<double>(UiConstants::RACE_RPM_MAX) * 1.1);
-    this->update();
-}
-
-void RpmBar::setNightMode(bool on)
-{
-    night_ = on;
-    this->update();
-}
-
-void RpmBar::paintEvent(QPaintEvent*)
-{
-    QPainter p(this);
-    p.setRenderHint(QPainter::Antialiasing, true);
-    const QRectF bar = this->rect();
-    const double max = static_cast<double>(UiConstants::RACE_RPM_MAX);
-    const double redline = max * UiConstants::RACE_REDLINE_PCT / 100.0;
-
-    // Track.
-    p.setPen(Qt::NoPen);
-    p.setBrush(night_ ? QColor(0x1C, 0x1C, 0x20) : QColor(0x2A, 0x2A, 0x30));
-    p.drawRoundedRect(bar, 4.0, 4.0);
-
-    // Redline zone marker (right part of the track).
-    const double redX = bar.width() * (redline / max);
-    p.setBrush(night_ ? QColor(0x7A, 0x0F, 0x14, 0x66) : QColor(0xD7, 0x19, 0x20, 0x55));
-    p.drawRoundedRect(QRectF(redX, 0.0, bar.width() - redX, bar.height()), 4.0, 4.0);
-
-    // Fill: neutral grey below redline, accent red above.
-    const double frac = qBound(0.0, rpm_ / max, 1.0);
-    if(frac > 0.0)
-    {
-        const double fillW = bar.width() * frac;
-        const QColor fill = (rpm_ >= redline)
-            ? (night_ ? QColor(0x7A, 0x0F, 0x14) : QColor(0xD7, 0x19, 0x20))
-            : (night_ ? QColor(0xC9, 0xC9, 0xC9) : QColor(0xF5, 0xF5, 0xF5));
-        p.setBrush(fill);
-        p.drawRoundedRect(QRectF(0.0, 0.0, fillW, bar.height()), 4.0, 4.0);
-    }
-}
-
 GaugePanel::GaugePanel(QWidget* parent)
     : QFrame(parent)
     , speedValue_(makeCenterLabel(QStringLiteral("0"), "raceSpeedValue"))
-    , rpmValue_(makeCenterLabel(QStringLiteral("0 tr/min"), "raceRpmValue"))
-    , rpmBar_(new RpmBar(this))
+    , rpmValue_(makeCenterLabel(QStringLiteral("0"), "raceRpmValue"))
 {
     this->setObjectName(QStringLiteral("gaugePanel"));
     speedValue_->setFont(interFont(UiConstants::RACE_SPEED_FONT_SIZE, QFont::Bold));
-    speedValue_->setAlignment(Qt::AlignCenter);
+    rpmValue_->setFont(interFont(UiConstants::RACE_RPM_FONT_SIZE, QFont::Bold));
 
-    auto* unit = makeCenterLabel(QStringLiteral("km/h"), "raceSpeedUnit");
-    unit->setFont(interFont(UiConstants::RACE_SPEED_UNIT_FONT_SIZE, QFont::Normal));
-    rpmValue_->setFont(interFont(UiConstants::RACE_RPM_FONT_SIZE, QFont::DemiBold));
+    auto* speedUnit = makeCenterLabel(QStringLiteral("km/h"), "raceSpeedUnit");
+    speedUnit->setFont(interFont(UiConstants::RACE_SPEED_UNIT_FONT_SIZE, QFont::Normal));
+    auto* rpmUnit = makeCenterLabel(QStringLiteral("tr/min"), "raceSpeedUnit");
+    rpmUnit->setFont(interFont(UiConstants::RACE_SPEED_UNIT_FONT_SIZE, QFont::Normal));
 
     auto* layout = new QVBoxLayout(this);
     layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(4);
+    layout->setSpacing(0);
     layout->addStretch(1);
     layout->addWidget(speedValue_);
-    layout->addWidget(unit);
-    layout->addSpacing(8);
+    layout->addWidget(speedUnit);
+    layout->addSpacing(12);
     layout->addWidget(rpmValue_);
-    layout->addWidget(rpmBar_);
+    layout->addWidget(rpmUnit);
     layout->addStretch(1);
-}
-
-void GaugePanel::setNightMode(bool on)
-{
-    rpmBar_->setNightMode(on);
 }
 
 void GaugePanel::setSpeed(double kmh)
@@ -171,8 +113,7 @@ void GaugePanel::setSpeed(double kmh)
 
 void GaugePanel::setRpm(double rpm)
 {
-    rpmValue_->setText(QString::number(qMax(0, qRound(rpm))) + QStringLiteral(" tr/min"));
-    rpmBar_->setRpm(rpm);
+    rpmValue_->setText(QString::number(qMax(0, qMin(qRound(rpm), UiConstants::RACE_RPM_MAX))));
 }
 
 class GForcePanel::Scope : public QWidget

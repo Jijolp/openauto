@@ -69,21 +69,23 @@ struct UiConstants
     static constexpr int RACE_GRID_SPACING = 16;
     static constexpr int RACE_NAV_WIDTH_PCT = 58;
     static constexpr int RACE_PANEL_RADIUS = 6;
-    // Vitesse : TRÈS gros chiffres (Inter Bold). Unité discrète.
+    // Vitesse + RPM : chiffres bruts géants (Inter Bold), unités discrètes.
+    // Pas de barre/arc (choix humain) : juste des chiffres bien visibles.
     static constexpr int RACE_SPEED_FONT_SIZE = 96;
+    static constexpr int RACE_RPM_FONT_SIZE = 64;
     static constexpr int RACE_SPEED_UNIT_FONT_SIZE = 18;
-    static constexpr int RACE_RPM_FONT_SIZE = 20;
-    // Compte-tours : fond d'échelle + début zone rouge (75%).
+    // Compte-tours : fond d'échelle pour le clamp d'affichage.
     static constexpr int RACE_RPM_MAX = 8000;
-    static constexpr int RACE_REDLINE_PCT = 75;
-    static constexpr int RACE_RPM_BAR_HEIGHT = 18;
     // G-mètre : cercles 0.5g / 1.0g, point rouge, colonne chiffres.
     static constexpr int RACE_G_FONT_SIZE = 18;
     static constexpr int RACE_G_LABEL_FONT_SIZE = 12;
     static constexpr int RACE_NAV_LOGO_SIZE = 64;
     // --- Race Mode v1: timings transition (ms) ---
-    // Logo central : 720° + gris→rouge + scale up, OutCubic.
+    // Logo central : 720° + gris→rouge + GROSSIT énormément (OutCubic),
+    // PUIS fade out qui libère l'interface (panneaux entrent derrière).
     static constexpr int RACE_LOGO_SPIN_MS = 700;
+    static constexpr double RACE_LOGO_GROW = 2.8;
+    static constexpr int RACE_LOGO_FADE_MS = 300;
     // Quadrants : sortie + fade out, ease-in.
     static constexpr int RACE_QUAD_OUT_MS = 450;
     // Panneaux : entrée + fade in, stagger 80ms (pattern splash), ease-out.
