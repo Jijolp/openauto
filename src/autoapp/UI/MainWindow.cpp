@@ -365,12 +365,13 @@ void MainWindow::trackRaceAnim(QPropertyAnimation* anim)
 
 void MainWindow::startRaceTransition()
 {
-    // Phase 1 (simultaneous): central logo spins 720° + grey→red + scale
-    // up (OutCubic ~700ms) while the 4 quadrants slide outward + fade out
-    // (~450ms ease-in). Phase 2 (after): panels slide in staggered.
-    // Robust choice documented in BUILD_NOTES §36: quadrants are layout-
-    // managed, so pos-slide is best-effort — opacity fade is guaranteed.
-    // AA auto-switch stays preemptive: onVideoStarted() cancels everything.
+    // Signature (retravaillée) : le logo central tourne 720° + rougit +
+    // GROSSIT énormément (OutCubic ~700ms) pendant que les 4 quadrants
+    // sortent + fade out (~450ms ease-in) ; PUIS le logo fade out (~300ms)
+    // et libère l'interface pendant que les panneaux entrent en stagger.
+    // Robustesse inchangée (BUILD_NOTES §36) : slide pos best-effort sur
+    // widgets layout-managés, fade garanti. AA auto-switch préemptif :
+    // onVideoStarted() annule tout.
     raceTransitionActive_ = true;
     const int gen = ++raceTransitionGen_;
 
@@ -394,10 +395,22 @@ void MainWindow::startRaceTransition()
         auto* grow = new QPropertyAnimation(centerLogo_, "scaleFactor", this);
         grow->setDuration(UiConstants::RACE_LOGO_SPIN_MS);
         grow->setStartValue(1.0);
-        grow->setEndValue(1.12);
+        grow->setEndValue(UiConstants::RACE_LOGO_GROW);
         grow->setEasingCurve(QEasingCurve::OutCubic);
         grow->start(QAbstractAnimation::DeleteWhenStopped);
         this->trackRaceAnim(grow);
+        // Fade-out piloté à la phase suivante : effet créé ici s'il
+        // manque (mode NO_SPLASH n'en met pas sur le logo central).
+        if(centerLogo_->graphicsEffect() == nullptr)
+        {
+            auto* logoEff = new QGraphicsOpacityEffect(centerLogo_);
+            logoEff->setOpacity(1.0);
+            centerLogo_->setGraphicsEffect(logoEff);
+        }
+        else if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+        {
+            logoEff->setOpacity(1.0);
+        }
     }
 
     const int pageW = this->centralWidget() != nullptr ? this->centralWidget()->width() : UiConstants::WINDOWED_WIDTH;
@@ -433,12 +446,32 @@ void MainWindow::startRaceTransition()
         ++idx;
     }
 
-    QTimer::singleShot(UiConstants::RACE_QUAD_OUT_MS + 30, this, [this, gen]() {
+    QTimer::singleShot(UiConstants::RACE_LOGO_SPIN_MS + 30, this, [this, gen]() {
         if(gen != raceTransitionGen_)
         {
             return;
         }
-        this->finishRaceEntry(gen);
+        // Phase 2 : le logo géant (rouge) fade out et libère l'interface.
+        if(centerLogo_ != nullptr)
+        {
+            if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+            {
+                auto* fade = new QPropertyAnimation(logoEff, "opacity", this);
+                fade->setDuration(UiConstants::RACE_LOGO_FADE_MS);
+                fade->setStartValue(1.0);
+                fade->setEndValue(0.0);
+                fade->setEasingCurve(QEasingCurve::InCubic);
+                fade->start(QAbstractAnimation::DeleteWhenStopped);
+                this->trackRaceAnim(fade);
+            }
+        }
+        QTimer::singleShot(UiConstants::RACE_LOGO_FADE_MS + 30, this, [this, gen]() {
+            if(gen != raceTransitionGen_)
+            {
+                return;
+            }
+            this->finishRaceEntry(gen);
+        });
     });
 }
 
@@ -458,12 +491,15 @@ void MainWindow::finishRaceEntry(int gen)
     raceQuadOrigPos_.clear();
     if(centerLogo_ != nullptr)
     {
-        // Central (spinning, red) hands over to the 48px bandeau button:
-        // fade-out central / fade-in bandeau (geometric migration of the
-        // logo widget between pages judged too fragile — see §36).
+        // Central (géant, rouge, faded out) hands over to the 48px bandeau
+        // button: reset invisibly (home page hidden) for the next visit.
         centerLogo_->setRotationAngle(0.0);
         centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
         centerLogo_->setScaleFactor(1.0);
+        if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+        {
+            logoEff->setOpacity(1.0);
+        }
     }
     if(raceBackEffect_ != nullptr)
     {
@@ -572,6 +608,10 @@ void MainWindow::cancelRaceTransition()
         centerLogo_->setRotationAngle(0.0);
         centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
         centerLogo_->setScaleFactor(1.0);
+        if(auto* logoEff = qobject_cast<QGraphicsOpacityEffect*>(centerLogo_->graphicsEffect()))
+        {
+            logoEff->setOpacity(1.0);
+        }
     }
     // Snap race panels back (layout re-asserts managed geometry) + opaque.
     if(racePage_ != nullptr && racePage_->layout() != nullptr)
@@ -613,10 +653,12 @@ void MainWindow::returnHomeFromRace()
     fade->setStartValue(1.0);
     fade->setEndValue(0.0);
     fade->setEasingCurve(QEasingCurve::OutCubic);
-    connect(fade, &QPropertyAnimation::finished, this, [this, eff, fade]() {
+    connect(fade, &QPropertyAnimation::finished, this, [this, fade]() {
         this->showHomePage();
+        // NOTE (crash fix): setGraphicsEffect(nullptr) DELETES the old
+        // effect itself (QWidget takes ownership) — no deleteLater on it
+        // (use-after-free → SIGSEGV on return from Race).
         racePage_->setGraphicsEffect(nullptr);
-        eff->deleteLater();
         fade->deleteLater();
     });
     fade->start();
@@ -677,10 +719,6 @@ void MainWindow::setNightMode(bool on)
     night_ = on;
     OPENAUTO_LOG(info) << "[MainWindow] night mode " << (on ? "ON" : "OFF") << ".";
     statusBar_->setNightMode(on);
-    if(gaugePanel_ != nullptr)
-    {
-        gaugePanel_->setNightMode(on);
-    }
     if(gforcePanel_ != nullptr)
     {
         gforcePanel_->setNightMode(on);
@@ -1130,7 +1168,6 @@ QWidget* MainWindow::buildRacePage()
     gsim_ = new GSim(gforcePanel_, this);
     connect(&HuEvents::instance(), &HuEvents::speedChanged, gaugePanel_, &GaugePanel::setSpeed);
     connect(&HuEvents::instance(), &HuEvents::rpmChanged, gaugePanel_, &GaugePanel::setRpm);
-    gaugePanel_->setNightMode(night_);
     gforcePanel_->setNightMode(night_);
     return racePage_;
 }
