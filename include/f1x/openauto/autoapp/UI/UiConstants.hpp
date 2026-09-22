@@ -74,9 +74,11 @@ struct UiConstants
     static constexpr int AA_BANDEAU_HEIGHT = 40;
     // Mini-cluster AA flottant bas-droite (marge au bord, colle à la barre AA).
     static constexpr int AA_OVERLAY_MARGIN = 8;
-    // Décalage du bouton logo vers la gauche pour ne pas chevaucher la
-    // zone infos AA (5G/horloge en bas à droite). À ajuster visuellement.
-    static constexpr int AA_FLOAT_SHIFT_LEFT = 140;
+    // Bouton logo seul : remonté pour être centré verticalement dans la
+    // barre AA du bas, et collé à droite contre la zone infos (5G/horloge)
+    // avec un petit espace. À ajuster visuellement si besoin.
+    static constexpr int AA_FLOAT_BOTTOM_MARGIN = 14;
+    static constexpr int AA_FLOAT_RIGHT_GAP = 100;
     // Floating AA home button (bottom-right over the video, blended with
     // AA's own bottom bar). No status bandeau on the AA page anymore.
     // Same size as the AA center buttons (~64px), icon scaled to match.

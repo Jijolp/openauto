@@ -339,9 +339,8 @@ void MainWindow::layoutAaCluster()
         return;
     }
     aaCluster_->adjustSize();
-    const int m = UiConstants::AA_OVERLAY_MARGIN;
-    aaCluster_->move(aaPage_->width() - aaCluster_->width() - m - UiConstants::AA_FLOAT_SHIFT_LEFT,
-                     aaPage_->height() - aaCluster_->height() - m);
+    aaCluster_->move(aaPage_->width() - aaCluster_->width() - UiConstants::AA_FLOAT_RIGHT_GAP,
+                     aaPage_->height() - aaCluster_->height() - UiConstants::AA_FLOAT_BOTTOM_MARGIN);
     if(aaCluster_->isVisible())
     {
         aaCluster_->raise();
