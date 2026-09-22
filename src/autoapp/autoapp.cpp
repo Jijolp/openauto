@@ -191,13 +191,6 @@ int main(int argc, char* argv[])
     auto connectedAccessoriesEnumerator(std::make_shared<aasdk::usb::ConnectedAccessoriesEnumerator>(usbWrapper, ioService, queryChainFactory));
     auto app = std::make_shared<autoapp::App>(ioService, usbWrapper, tcpWrapper, androidAutoEntityFactory, std::move(usbHub), std::move(connectedAccessoriesEnumerator), canManager);
 
-    // Connect MainWindow's stopAndroidAuto to App::stop() so back from AA page
-    // properly stops the AA session (VideoService, etc.) instead of just
-    // switching pages which leaves the session running.
-    QObject::connect(&mainWindow, &autoapp::ui::MainWindow::stopAndroidAuto, [app]() {
-        app->stop();
-    });
-
     QObject::connect(&connectDialog, &autoapp::ui::ConnectDialog::connectionSucceed, [&app](auto socket) {
         app->start(std::move(socket));
     });

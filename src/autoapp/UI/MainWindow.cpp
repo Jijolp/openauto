@@ -291,13 +291,28 @@ void MainWindow::showAAPage()
     }
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
-    // AA waiting screen (no video yet): show status bar with back button.
-    // Empty title = home layout (clock | temp | ... | NO SIG) with back button.
-    statusBar_->setTitle(QString());
-    statusBar_->show();
-    if(aaCluster_ != nullptr)
+    // If video is already playing (session active), hide status bar and show floating button.
+    // Otherwise show status bar (waiting screen).
+    if(aaSessionActive_)
     {
-        aaCluster_->hide();
+        statusBar_->hide();
+        this->layoutAaCluster();
+        if(aaCluster_ != nullptr)
+        {
+            aaCluster_->show();
+            aaCluster_->raise();
+        }
+    }
+    else
+    {
+        // AA waiting screen (no video yet): show status bar with back button.
+        // Empty title = home layout (clock | temp | ... | NO SIG) with back button.
+        statusBar_->setTitle(QString());
+        statusBar_->show();
+        if(aaCluster_ != nullptr)
+        {
+            aaCluster_->hide();
+        }
     }
 }
 
@@ -646,18 +661,13 @@ void MainWindow::cancelRaceTransition()
 
 void MainWindow::onStatusBack()
 {
-    // Unified bar back button (§39): Race keeps its short fade home,
-    // other titled pages go home instantly.
-    // AA page: must stop the AA session properly (not just switch page),
-    // otherwise video service stays running and causes issues on reconnect.
+    // Unified bar back button: Race keeps its short fade home,
+    // other pages go home instantly.
+    // AA page: NEVER stop the session (user requirement: persist AA
+    // across navigation so music/navigation continues). Just go home.
     if(stack_->currentIndex() == RACE_PAGE)
     {
         this->returnHomeFromRace();
-        return;
-    }
-    if(stack_->currentIndex() == AA_PAGE)
-    {
-        emit stopAndroidAuto();
         return;
     }
     this->showHomePage();
