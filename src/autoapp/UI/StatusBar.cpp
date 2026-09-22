@@ -103,13 +103,17 @@ void StatusBar::setTempPlaceholder()
 
 void StatusBar::setTitle(const QString& title)
 {
+    // Back button ALWAYS visible (logo only, no border/bg) in the status bar,
+    // except when AA video is connected (handled by MainWindow calling hide()).
     const bool titled = !title.isEmpty();
     if(titled)
     {
         titleLabel_->setText(title.toUpper());
     }
-    backButton_->setVisible(titled);
+    // backButton_ is always visible here; MainWindow hides the whole bar for AA video.
+    backButton_->setVisible(true);
     titleLabel_->setVisible(titled);
+    // Signal only in home layout (empty title).
     labelSignal_->setVisible(!titled);
     this->relayout(titled);
 }

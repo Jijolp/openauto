@@ -291,8 +291,8 @@ void MainWindow::showAAPage()
     }
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
-    // AA waiting screen (no video yet): show status bar WITHOUT back button
-    // (empty title = home layout: clock | temp | ... | NO SIG).
+    // AA waiting screen (no video yet): show status bar with back button.
+    // Empty title = home layout (clock | temp | ... | NO SIG) with back button.
     statusBar_->setTitle(QString());
     statusBar_->show();
     if(aaCluster_ != nullptr)
@@ -790,7 +790,8 @@ void MainWindow::onVideoStarted()
     {
         aaPlaceholder_->hide();
     }
-    // Video connected: full-height, hide status bar, show floating aaCluster.
+    // Video connected: full-height, hide status bar, show floating aaCluster
+    // (bottom-right Mercedes logo button over the video).
     statusBar_->hide();
     this->layoutAaCluster();
     if(aaCluster_ != nullptr)
