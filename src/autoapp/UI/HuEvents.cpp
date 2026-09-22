@@ -17,6 +17,7 @@ namespace ui
 
 QWidget* HuEvents::videoHost_ = nullptr;
 QWidget* HuEvents::statusBar_ = nullptr;
+QWidget* HuEvents::aaOverlay_ = nullptr;
 std::atomic<bool> HuEvents::aaPageActive_{false};
 std::atomic<bool> HuEvents::splashActive_{false};
 std::atomic<bool> HuEvents::screenOffActive_{false};
@@ -102,11 +103,43 @@ bool HuEvents::isStatusBarChild(const QObject* obj)
 QRect HuEvents::statusBarGeometry()
 {
     const QWidget* bar = statusBar_;
-    if(bar == nullptr)
+    if(bar == nullptr || !bar->isVisible())
     {
         return QRect();
     }
     return QRect(bar->mapToGlobal(QPoint(0, 0)), bar->size());
+}
+
+void HuEvents::setAaOverlay(QWidget* overlay)
+{
+    aaOverlay_ = overlay;
+}
+
+bool HuEvents::isAaOverlayChild(const QObject* obj)
+{
+    const QWidget* overlay = aaOverlay_;
+    if(overlay == nullptr || obj == nullptr)
+    {
+        return false;
+    }
+    for(const QObject* o = obj; o != nullptr; o = o->parent())
+    {
+        if(o == overlay)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+QRect HuEvents::aaOverlayGeometry()
+{
+    const QWidget* overlay = aaOverlay_;
+    if(overlay == nullptr || !overlay->isVisible())
+    {
+        return QRect();
+    }
+    return QRect(overlay->mapToGlobal(QPoint(0, 0)), overlay->size());
 }
 
 void HuEvents::setAaPageActive(bool active)

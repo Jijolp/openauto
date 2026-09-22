@@ -22,6 +22,7 @@
 #include <QShortcut>
 #include <QStackedLayout>
 #include <QStackedWidget>
+#include <QTime>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QGridLayout>
@@ -96,6 +97,12 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , racePage_(nullptr)
     , carPage_(nullptr)
     , aaPlaceholder_(nullptr)
+    , aaCluster_(nullptr)
+    , aaClock_(nullptr)
+    , aaTemp_(nullptr)
+    , aaSignal_(nullptr)
+    , aaHomeButton_(nullptr)
+    , aaHomeLogo_(nullptr)
     , splash_(new SplashOverlay(this))
     , screenOff_(new ScreenOffOverlay(this))
     , quadrantAA_(nullptr)
@@ -151,6 +158,64 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
 
     HuEvents::setVideoHost(aaPage_);
     HuEvents::setStatusBar(statusBar_);
+
+    // Mini-cluster AA: bottom-right over the video, blended with AA's own
+    // bottom bar (no bandeau on the AA page anymore). Child of the AA page
+    // so it only shows when AA is on top (StackAll). Container + labels
+    // are click-transparent; only the logo button takes clicks.
+    aaCluster_ = new QWidget(aaPage_);
+    aaCluster_->setObjectName(QStringLiteral("aaCluster"));
+    aaCluster_->setAttribute(Qt::WA_StyledBackground, true);
+    aaCluster_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    aaCluster_->setFocusPolicy(Qt::NoFocus);
+    auto* clusterLayout = new QHBoxLayout(aaCluster_);
+    clusterLayout->setContentsMargins(UiConstants::STATUS_BAR_MARGIN, 0,
+                                      UiConstants::STATUS_BAR_MARGIN, 0);
+    clusterLayout->setSpacing(8);
+    aaClock_ = new QLabel(aaCluster_);
+    aaClock_->setObjectName(QStringLiteral("aaClock"));
+    aaClock_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    aaTemp_ = new QLabel(QStringLiteral("--°"), aaCluster_);
+    aaTemp_->setObjectName(QStringLiteral("aaTemp"));
+    aaTemp_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    aaSignal_ = new QLabel(QStringLiteral("NO SIG"), aaCluster_);
+    aaSignal_->setObjectName(QStringLiteral("aaSignal"));
+    aaSignal_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    aaHomeButton_ = new QPushButton(aaCluster_);
+    aaHomeButton_->setObjectName(QStringLiteral("aaFloatingButton"));
+    aaHomeButton_->setFixedSize(UiConstants::AA_FLOAT_BUTTON_SIZE, UiConstants::AA_FLOAT_BUTTON_SIZE);
+    aaHomeButton_->setFlat(true);
+    aaHomeButton_->setFocusPolicy(Qt::NoFocus);
+    aaHomeButton_->setCursor(Qt::PointingHandCursor);
+    aaHomeLogo_ = new MercedesLogo(aaHomeButton_, UiConstants::LOGO_AA_ICON_SIZE);
+    aaHomeLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    aaHomeLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
+    aaHomeLogo_->move((UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2,
+                      (UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2);
+    clusterLayout->addWidget(aaClock_);
+    clusterLayout->addWidget(aaTemp_);
+    clusterLayout->addWidget(aaSignal_);
+    clusterLayout->addWidget(aaHomeButton_);
+    {
+        auto* clockTimer = new QTimer(aaCluster_);
+        connect(clockTimer, &QTimer::timeout, this, [this]() {
+            if(aaClock_ != nullptr)
+            {
+                aaClock_->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
+            }
+        });
+        clockTimer->start(1000);
+        aaClock_->setText(QTime::currentTime().toString(QStringLiteral("HH:mm")));
+    }
+    HuEvents::setAaOverlay(aaCluster_);
+    connect(aaHomeButton_, &QPushButton::clicked, this, &MainWindow::showHomePage);
+    connect(aaHomeButton_, &QPushButton::pressed, this, [this]() {
+        if(aaHomeLogo_ != nullptr) { aaHomeLogo_->setActive(true); }
+    });
+    connect(aaHomeButton_, &QPushButton::released, this, [this]() {
+        if(aaHomeLogo_ != nullptr) { aaHomeLogo_->setActive(false); }
+    });
+    aaCluster_->hide();
 
     // Overlays cover the whole MainWindow (including status bar).
     splash_->hide();
@@ -216,13 +281,26 @@ void MainWindow::showHomePage()
     stack_->setCurrentIndex(HOME_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
+    statusBar_->show();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->hide();
+    }
 }
 
 void MainWindow::showAAPage()
 {
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
-    statusBar_->setAaMode(true);
+    // No bandeau on the AA page: full-height video, only the floating
+    // logo button (bottom-right, blended with AA's own bottom bar).
+    statusBar_->hide();
+    this->layoutAaCluster();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->show();
+        aaCluster_->raise();
+    }
 }
 
 void MainWindow::showSettingsPage()
@@ -236,6 +314,11 @@ void MainWindow::showSettingsPage()
     stack_->setCurrentIndex(SETTINGS_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
+    statusBar_->show();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->hide();
+    }
 }
 
 void MainWindow::showRacePage()
@@ -243,6 +326,11 @@ void MainWindow::showRacePage()
     stack_->setCurrentIndex(RACE_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
+    statusBar_->show();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->hide();
+    }
 }
 
 void MainWindow::showCarPage()
@@ -250,6 +338,11 @@ void MainWindow::showCarPage()
     stack_->setCurrentIndex(CAR_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setAaMode(false);
+    statusBar_->show();
+    if(aaCluster_ != nullptr)
+    {
+        aaCluster_->hide();
+    }
 }
 
 void MainWindow::layoutStatusOverlay()
@@ -263,6 +356,24 @@ void MainWindow::layoutStatusOverlay()
     const int w = this->centralWidget()->width();
     statusBar_->setGeometry(0, 0, w, UiConstants::STATUS_BAR_HEIGHT);
     statusBar_->raise();
+}
+
+void MainWindow::layoutAaCluster()
+{
+    // Mini-cluster bottom-right over the video, next to AA's own
+    // clock/signal zone. Recomputed on every resize (1080p-ready).
+    if(aaCluster_ == nullptr || aaPage_ == nullptr)
+    {
+        return;
+    }
+    aaCluster_->adjustSize();
+    const int m = UiConstants::AA_OVERLAY_MARGIN;
+    aaCluster_->move(aaPage_->width() - aaCluster_->width() - m,
+                     aaPage_->height() - aaCluster_->height() - m);
+    if(aaCluster_->isVisible())
+    {
+        aaCluster_->raise();
+    }
 }
 
 void MainWindow::setNightMode(bool on)
@@ -329,6 +440,10 @@ void MainWindow::onVideoStopped()
 void MainWindow::onTempExt(int tempC)
 {
     statusBar_->setTemp(tempC);
+    if(aaTemp_ != nullptr)
+    {
+        aaTemp_->setText(QString::number(tempC) + QStringLiteral("°"));
+    }
 }
 
 void MainWindow::onIgnition(bool on)
@@ -399,6 +514,7 @@ void MainWindow::resizeEvent(QResizeEvent* event)
 {
     QMainWindow::resizeEvent(event);
     this->layoutStatusOverlay();
+    this->layoutAaCluster();
     if(splash_ != nullptr && splash_->isVisible())
     {
         splash_->setGeometry(this->rect());

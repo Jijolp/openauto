@@ -97,6 +97,7 @@ private:
     void animateQuadrantsIn();
     void positionCenterLogo();
     void layoutStatusOverlay();
+    void layoutAaCluster();
     static QPushButton* makeLogoBackButton(QWidget* parent, int size, int iconSize, const char* objName);
 
     StatusBar* statusBar_;
@@ -108,6 +109,14 @@ private:
     QWidget* racePage_;
     QWidget* carPage_;
     QLabel* aaPlaceholder_;
+    // Mini-cluster AA flottant bas-droite (horloge + temp + signal +
+    // bouton logo → accueil), enfant de la page AA, intégré à la barre AA.
+    QWidget* aaCluster_;
+    QLabel* aaClock_;
+    QLabel* aaTemp_;
+    QLabel* aaSignal_;
+    QPushButton* aaHomeButton_;
+    MercedesLogo* aaHomeLogo_;
     SplashOverlay* splash_;
     ScreenOffOverlay* screenOff_;
 

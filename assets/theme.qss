@@ -318,6 +318,42 @@ QPushButton#aaHomeButton:pressed {
     border: 1px solid #D71920;
 }
 
+/* Mini-cluster AA flottant bas-droite (horloge + temp + signal + logo).
+ * Pilule semi-opaque fondue dans la barre AA du bas (au-dessus de la
+ * vidéo opaque : pas de fuite compositor). Conteneur + labels
+ * click-transparents, seul le bouton prend les clics. */
+#aaCluster {
+    background-color: rgba(10, 10, 12, 210);
+    border: 1px solid #2A2A30;
+    border-radius: 10px;
+}
+
+#aaClock {
+    color: #F5F5F5;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#aaTemp, #aaSignal {
+    color: #9E9E9E;
+    font-size: 13px;
+}
+
+QPushButton#aaFloatingButton {
+    background: #17171B;
+    border: 1px solid #2A2A30;
+    border-radius: 8px;
+    padding: 0px;
+}
+QPushButton#aaFloatingButton:hover {
+    border: 1px solid #D71920;
+    background: #1E1E24;
+}
+QPushButton#aaFloatingButton:pressed {
+    background: #D71920;
+    border: 1px solid #D71920;
+}
+
 #devHint {
     color: #6E6E6E;
     font-size: 11px;

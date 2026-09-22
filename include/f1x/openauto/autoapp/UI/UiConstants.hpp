@@ -72,6 +72,11 @@ struct UiConstants
 
     // AA bandeau inner (logo button hit area, present inside StatusBar).
     static constexpr int AA_BANDEAU_HEIGHT = 40;
+    // Mini-cluster AA flottant bas-droite (marge au bord, colle à la barre AA).
+    static constexpr int AA_OVERLAY_MARGIN = 8;
+    // Floating AA home button (bottom-right over the video, blended with
+    // AA's own bottom bar). No status bandeau on the AA page anymore.
+    static constexpr int AA_FLOAT_BUTTON_SIZE = 48;
 };
 
 }

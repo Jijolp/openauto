@@ -243,15 +243,17 @@ bool InputDevice::handleTouchEvent(QObject* obj, QEvent* event)
     };
 
     QMouseEvent* mouse = static_cast<QMouseEvent*>(event);
-    // Floating status overlay: the bar sits INSIDE the video host rect,
-    // so without this a logo tap would be forwarded to the phone and the
-    // event eaten before reaching the button. Exempt by target object OR
-    // by bar geometry (synthesized touch events may report another obj).
-    // Return false → normal delivery, the button gets its clicked.
+    // HU-owned tap targets inside the video host rect (floating status
+    // overlay, floating AA home button): never forward to the phone, or
+    // the event would be eaten before reaching the button. Exempt by
+    // target object OR by geometry (synthesized touch events may report
+    // another obj). Return false → normal delivery, buttons get clicked.
     if(ui::HuEvents::isStatusBarChild(obj) ||
-       ui::HuEvents::statusBarGeometry().contains(mouse->globalPos()))
+       ui::HuEvents::isAaOverlayChild(obj) ||
+       ui::HuEvents::statusBarGeometry().contains(mouse->globalPos()) ||
+       ui::HuEvents::aaOverlayGeometry().contains(mouse->globalPos()))
     {
-        OPENAUTO_LOG(debug) << "[InputDevice] status-bar tap exempted, not forwarded.";
+        OPENAUTO_LOG(debug) << "[InputDevice] HU tap target exempted, not forwarded.";
         return false;
     }
     if(event->type() == QEvent::MouseButtonRelease || mouse->buttons().testFlag(Qt::LeftButton))

@@ -56,6 +56,13 @@ public:
     // Global geometry of the status bar. GUI thread only (reads QWidget).
     static QRect statusBarGeometry();
 
+    // --- mini-cluster AA bas-droite (même exemption tactile que la barre) ---
+    // Enfant de la page AA (horloge + temp + signal + bouton logo).
+    // GUI thread only.
+    static void setAaOverlay(QWidget* overlay);
+    static bool isAaOverlayChild(const QObject* obj);
+    static QRect aaOverlayGeometry();
+
     // --- navigation state (written by MainWindow, read by InputDevice) ---
     static void setAaPageActive(bool active);
     static bool isAaPageActive();
@@ -78,6 +85,7 @@ private:
 
     static QWidget* videoHost_;
     static QWidget* statusBar_;
+    static QWidget* aaOverlay_;
     static std::atomic<bool> aaPageActive_;
     static std::atomic<bool> splashActive_;
     static std::atomic<bool> screenOffActive_;

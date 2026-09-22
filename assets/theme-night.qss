@@ -318,6 +318,39 @@ QPushButton#aaHomeButton:pressed {
     border: 1px solid #7A0F14;
 }
 
+/* Mini-cluster AA flottant bas-droite (cf. theme.qss ; déjà noir). */
+#aaCluster {
+    background-color: rgba(5, 5, 6, 215);
+    border: 1px solid #1C1C20;
+    border-radius: 10px;
+}
+
+#aaClock {
+    color: #C9C9C9;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#aaTemp, #aaSignal {
+    color: #6E6E6E;
+    font-size: 13px;
+}
+
+QPushButton#aaFloatingButton {
+    background: #050506;
+    border: 1px solid #1C1C20;
+    border-radius: 8px;
+    padding: 0px;
+}
+QPushButton#aaFloatingButton:hover {
+    border: 1px solid #7A0F14;
+    background: #0A0A0C;
+}
+QPushButton#aaFloatingButton:pressed {
+    background: #7A0F14;
+    border: 1px solid #7A0F14;
+}
+
 #devHint {
     color: #4A4A4A;
     font-size: 11px;
