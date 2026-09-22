@@ -88,20 +88,35 @@ GaugePanel::GaugePanel(QWidget* parent)
     speedValue_->setFont(interFont(UiConstants::RACE_SPEED_FONT_SIZE, QFont::Bold));
     rpmValue_->setFont(interFont(UiConstants::RACE_RPM_FONT_SIZE, QFont::Bold));
 
+    // Units share the data row (bottom-aligned on the figures baseline).
     auto* speedUnit = makeCenterLabel(QStringLiteral("km/h"), "raceSpeedUnit");
     speedUnit->setFont(interFont(UiConstants::RACE_SPEED_UNIT_FONT_SIZE, QFont::Normal));
+    speedUnit->setAlignment(Qt::AlignBottom | Qt::AlignLeft);
     auto* rpmUnit = makeCenterLabel(QStringLiteral("tr/min"), "raceSpeedUnit");
     rpmUnit->setFont(interFont(UiConstants::RACE_SPEED_UNIT_FONT_SIZE, QFont::Normal));
+    rpmUnit->setAlignment(Qt::AlignBottom | Qt::AlignLeft);
+
+    auto* speedRow = new QHBoxLayout();
+    speedRow->setContentsMargins(0, 0, 0, 0);
+    speedRow->setSpacing(8);
+    speedRow->addStretch(1);
+    speedRow->addWidget(speedValue_);
+    speedRow->addWidget(speedUnit);
+    speedRow->addStretch(1);
+    auto* rpmRow = new QHBoxLayout();
+    rpmRow->setContentsMargins(0, 0, 0, 0);
+    rpmRow->setSpacing(8);
+    rpmRow->addStretch(1);
+    rpmRow->addWidget(rpmValue_);
+    rpmRow->addWidget(rpmUnit);
+    rpmRow->addStretch(1);
 
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(12, 12, 12, 12);
+    layout->setContentsMargins(8, 8, 8, 8);
     layout->setSpacing(0);
     layout->addStretch(1);
-    layout->addWidget(speedValue_);
-    layout->addWidget(speedUnit);
-    layout->addSpacing(12);
-    layout->addWidget(rpmValue_);
-    layout->addWidget(rpmUnit);
+    layout->addLayout(speedRow);
+    layout->addLayout(rpmRow);
     layout->addStretch(1);
 }
 

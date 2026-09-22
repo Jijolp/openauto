@@ -20,7 +20,7 @@ struct UiConstants
 {
     // Displayed in Paramètres → "Version logicielle". Bump per release so
     // a human can check the running binary is the latest build.
-    static constexpr const char* APP_VERSION = "0.9.0-race1";
+    static constexpr const char* APP_VERSION = "0.9.0-race2";
 
     // Dev windowed geometry (OPENAUTO_WINDOWED=1), target head-unit 1024x600.
     static constexpr int WINDOWED_WIDTH = 1024;
@@ -30,6 +30,11 @@ struct UiConstants
     // present on every page (never an overlay on the video only).
     static constexpr int STATUS_BAR_HEIGHT = 40;
     static constexpr int STATUS_BAR_MARGIN = 12;
+    // Unified bar (§39): titled pages show [back logo] TITLE left,
+    // temp + clock right. Home layout unchanged.
+    static constexpr int STATUS_TITLE_FONT_SIZE = 20;
+    static constexpr int STATUS_BACK_BUTTON_SIZE = 36;
+    static constexpr int STATUS_BACK_ICON_SIZE = 24;
 
     // Clock / placeholders font sizes (points are scaled by Qt, px in QSS).
     static constexpr int CLOCK_FONT_SIZE = 22;
@@ -69,11 +74,11 @@ struct UiConstants
     static constexpr int RACE_GRID_SPACING = 16;
     static constexpr int RACE_NAV_WIDTH_PCT = 58;
     static constexpr int RACE_PANEL_RADIUS = 6;
-    // Vitesse + RPM : chiffres bruts géants (Inter Bold), unités discrètes.
-    // Pas de barre/arc (choix humain) : juste des chiffres bien visibles.
-    static constexpr int RACE_SPEED_FONT_SIZE = 96;
-    static constexpr int RACE_RPM_FONT_SIZE = 64;
-    static constexpr int RACE_SPEED_UNIT_FONT_SIZE = 18;
+    // Vitesse + RPM : chiffres bruts qui remplissent le panneau (Inter
+    // Bold), unités sur la même ligne que la donnée (pas de barre/arc).
+    static constexpr int RACE_SPEED_FONT_SIZE = 112;
+    static constexpr int RACE_RPM_FONT_SIZE = 76;
+    static constexpr int RACE_SPEED_UNIT_FONT_SIZE = 20;
     // Compte-tours : fond d'échelle pour le clamp d'affichage.
     static constexpr int RACE_RPM_MAX = 8000;
     // G-mètre : cercles 0.5g / 1.0g, point rouge, colonne chiffres.
