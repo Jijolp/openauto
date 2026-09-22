@@ -654,12 +654,15 @@ void MainWindow::returnHomeFromRace()
     fade->setEndValue(0.0);
     fade->setEasingCurve(QEasingCurve::OutCubic);
     connect(fade, &QPropertyAnimation::finished, this, [this, fade]() {
-        this->showHomePage();
-        // NOTE (crash fix): setGraphicsEffect(nullptr) DELETES the old
-        // effect itself (QWidget takes ownership) — no deleteLater on it
-        // (use-after-free → SIGSEGV on return from Race).
-        racePage_->setGraphicsEffect(nullptr);
         fade->deleteLater();
+        // Effect always cleaned (the page may now sit below AA).
+        // NOTE: AA may have taken over mid-fade (preemptive auto-switch):
+        // only go home if still on Race — never yank the user out of AA.
+        racePage_->setGraphicsEffect(nullptr);
+        if(stack_->currentIndex() == RACE_PAGE && !aaSessionActive_)
+        {
+            this->showHomePage();
+        }
     });
     fade->start();
 }
