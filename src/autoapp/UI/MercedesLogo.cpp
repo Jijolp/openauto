@@ -123,6 +123,15 @@ void MercedesLogo::reloadSvg()
 
 void MercedesLogo::paintEvent(QPaintEvent*)
 {
+    // Reentrancy guard: prevent recursive paintEvent calls which cause
+    // "QPainter::begin: A paint device can only be painted by one painter at a time"
+    static thread_local bool painting = false;
+    if(painting)
+    {
+        return;
+    }
+    painting = true;
+
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
 
@@ -143,12 +152,15 @@ void MercedesLogo::paintEvent(QPaintEvent*)
         // parent's border-radius (e.g. center logo button 90px radius).
         const qreal inset = 2.0;
         renderer_->render(&p, QRectF(inset, inset, w - 2*inset, h - 2*inset));
+        painting = false;
         return;
     }
 
     // Fallback (no asset files): geometric star, same spirit.
     const qreal size = qMin(w, h);
     this->paintFallback(p, cx, cy, size);
+
+    painting = false;
 }
 
 void MercedesLogo::paintFallback(QPainter& p, qreal cx, qreal cy, qreal size)

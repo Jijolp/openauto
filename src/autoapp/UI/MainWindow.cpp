@@ -687,6 +687,18 @@ void MainWindow::returnHomeFromRace()
         this->showHomePage();
         return;
     }
+    // Ensure central logo (on home page, underneath) is in clean state
+    // before race page fades out and reveals it. Prevents paint conflicts.
+    if(centerLogo_ != nullptr)
+    {
+        centerLogo_->setRotationAngle(0.0);
+        centerLogo_->setScaleFactor(1.0);
+        centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
+        if(auto* eff = qobject_cast<QGraphicsOpacityEffect*>(centerHit_->graphicsEffect()))
+        {
+            eff->setOpacity(1.0);
+        }
+    }
     returningFromRace_ = true;
     auto* eff = new QGraphicsOpacityEffect(racePage_);
     racePage_->setGraphicsEffect(eff);
