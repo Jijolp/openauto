@@ -99,6 +99,16 @@ bool HuEvents::isStatusBarChild(const QObject* obj)
     return false;
 }
 
+QRect HuEvents::statusBarGeometry()
+{
+    const QWidget* bar = statusBar_;
+    if(bar == nullptr)
+    {
+        return QRect();
+    }
+    return QRect(bar->mapToGlobal(QPoint(0, 0)), bar->size());
+}
+
 void HuEvents::setAaPageActive(bool active)
 {
     aaPageActive_.store(active);

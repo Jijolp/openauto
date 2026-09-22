@@ -210,14 +210,8 @@ bool InputDevice::handleTouchEvent(QObject* obj, QEvent* event)
     {
         return false;
     }
-    // Floating status overlay: taps on the bar (clock, temp, AA logo
-    // button) belong to the HU. Since the overlay, the bar sits INSIDE
-    // the video host rect, so without this the logo tap would be
-    // forwarded to the phone and eaten before reaching the button.
-    if(ui::HuEvents::isStatusBarChild(obj))
-    {
-        return false;
-    }
+    // Floating status overlay: handled below at mouse level (object
+    // AND geometry fallback) — see after the QMouseEvent cast.
     // UI-2a single window: off the AA page every click belongs to the HU
     // (keeps Home/Settings buttons clickable during a session and avoids
     // injecting garbage touches for taps outside the video).
@@ -249,6 +243,17 @@ bool InputDevice::handleTouchEvent(QObject* obj, QEvent* event)
     };
 
     QMouseEvent* mouse = static_cast<QMouseEvent*>(event);
+    // Floating status overlay: the bar sits INSIDE the video host rect,
+    // so without this a logo tap would be forwarded to the phone and the
+    // event eaten before reaching the button. Exempt by target object OR
+    // by bar geometry (synthesized touch events may report another obj).
+    // Return false → normal delivery, the button gets its clicked.
+    if(ui::HuEvents::isStatusBarChild(obj) ||
+       ui::HuEvents::statusBarGeometry().contains(mouse->globalPos()))
+    {
+        OPENAUTO_LOG(debug) << "[InputDevice] status-bar tap exempted, not forwarded.";
+        return false;
+    }
     if(event->type() == QEvent::MouseButtonRelease || mouse->buttons().testFlag(Qt::LeftButton))
     {
         // UI-2a: the video is an embedded widget now, so widget-local

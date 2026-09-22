@@ -53,6 +53,8 @@ public:
     // INSIDE the video host rect since the overlay change). GUI thread only.
     static void setStatusBar(QWidget* bar);
     static bool isStatusBarChild(const QObject* obj);
+    // Global geometry of the status bar. GUI thread only (reads QWidget).
+    static QRect statusBarGeometry();
 
     // --- navigation state (written by MainWindow, read by InputDevice) ---
     static void setAaPageActive(bool active);
