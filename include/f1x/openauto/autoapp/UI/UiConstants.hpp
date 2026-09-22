@@ -79,7 +79,9 @@ struct UiConstants
     static constexpr int AA_FLOAT_SHIFT_LEFT = 140;
     // Floating AA home button (bottom-right over the video, blended with
     // AA's own bottom bar). No status bandeau on the AA page anymore.
-    static constexpr int AA_FLOAT_BUTTON_SIZE = 48;
+    // Same size as the AA center buttons (~64px), icon scaled to match.
+    static constexpr int AA_FLOAT_BUTTON_SIZE = 64;
+    static constexpr int AA_FLOAT_ICON_SIZE = 34;
 };
 
 }

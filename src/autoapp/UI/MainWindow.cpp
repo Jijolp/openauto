@@ -173,11 +173,11 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     aaHomeButton_->setFlat(true);
     aaHomeButton_->setFocusPolicy(Qt::NoFocus);
     aaHomeButton_->setCursor(Qt::PointingHandCursor);
-    aaHomeLogo_ = new MercedesLogo(aaHomeButton_, UiConstants::LOGO_AA_ICON_SIZE);
+    aaHomeLogo_ = new MercedesLogo(aaHomeButton_, UiConstants::AA_FLOAT_ICON_SIZE);
     aaHomeLogo_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     aaHomeLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-    aaHomeLogo_->move((UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2,
-                      (UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::LOGO_AA_ICON_SIZE) / 2);
+    aaHomeLogo_->move((UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::AA_FLOAT_ICON_SIZE) / 2,
+                      (UiConstants::AA_FLOAT_BUTTON_SIZE - UiConstants::AA_FLOAT_ICON_SIZE) / 2);
     clusterLayout->addWidget(aaHomeButton_);
     HuEvents::setAaOverlay(aaCluster_);
     connect(aaHomeButton_, &QPushButton::clicked, this, &MainWindow::showHomePage);
