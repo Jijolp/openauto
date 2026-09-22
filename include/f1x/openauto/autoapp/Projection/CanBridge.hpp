@@ -86,6 +86,17 @@ struct CanTempConfig
     double offset = 0.0;
 };
 
+// Race Mode v1: RPM stub (same shape as speed). PLACEHOLDER formula:
+// rpm = byte0 * factor (0x264, byte 0 = rpm/10 → factor 10.0), to be
+// calibrated against the real W203 capture (see car/README.md).
+struct CanRpmConfig
+{
+    bool present = false;
+    uint32_t canId = 0;
+    uint8_t byteIndex = 0;
+    double factor = 10.0;
+};
+
 struct CanMap
 {
     std::vector<CanButtonBinding> buttons;
@@ -93,6 +104,7 @@ struct CanMap
     CanSpeedConfig speed;
     CanNightConfig nightMode;
     CanTempConfig tempExt;
+    CanRpmConfig rpm;
 };
 
 // CanBridge: socketcan reader thread translating CAN frames into actions.
@@ -149,6 +161,7 @@ private:
     bool nightKnown_;
     bool nightOn_;
     double lastSpeed_;
+    double lastRpm_;
     bool tempKnown_;
     int lastTemp_;
 };

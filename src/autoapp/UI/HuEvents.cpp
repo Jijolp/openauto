@@ -48,6 +48,16 @@ void HuEvents::notifyIgnition(bool on)
     emit instance().ignitionChanged(on);
 }
 
+void HuEvents::notifySpeed(double kmh)
+{
+    emit instance().speedChanged(kmh);
+}
+
+void HuEvents::notifyRpm(double rpm)
+{
+    emit instance().rpmChanged(rpm);
+}
+
 void HuEvents::notifyVideoStarted()
 {
     emit instance().videoStarted();

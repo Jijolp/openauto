@@ -138,6 +138,7 @@ CanBridge::CanBridge(IInputDeviceEventHandler& eventHandler, std::string interfa
     , nightKnown_(false)
     , nightOn_(false)
     , lastSpeed_(-1.0)
+    , lastRpm_(-1.0)
     , tempKnown_(false)
     , lastTemp_(0)
 {
@@ -147,7 +148,8 @@ CanBridge::CanBridge(IInputDeviceEventHandler& eventHandler, std::string interfa
                        << ", ignition: " << (map_.ignition.present ? "yes" : "no")
                        << ", speed: " << (map_.speed.present ? "yes" : "no")
                        << ", night: " << (map_.nightMode.present ? "yes" : "no")
-                       << ", temp: " << (map_.tempExt.present ? "yes" : "no");
+                       << ", temp: " << (map_.tempExt.present ? "yes" : "no")
+                        << ", rpm: " << (map_.rpm.present ? "yes" : "no");
 }
 
 CanBridge::~CanBridge()
@@ -330,8 +332,7 @@ CanMap CanBridge::loadMap(const std::string& mapPath)
         }
     }
 
-    if(root.contains("temp_ext") && root.value("temp_ext").isObject())
-    {
+    if(root.contains("temp_ext") && root.value("temp_ext").isObject())    {
         const QJsonObject obj = root.value("temp_ext").toObject();
         uint32_t canId = 0;
         if(parseHex(obj.value("can_id"), canId))
@@ -341,6 +342,19 @@ CanMap CanBridge::loadMap(const std::string& mapPath)
             map.tempExt.byteIndex = static_cast<uint8_t>(parseHexOr(obj, "byte", 0));
             map.tempExt.factor = obj.value("factor").toDouble(1.0);
             map.tempExt.offset = obj.value("offset").toDouble(0.0);
+        }
+    }
+
+    if(root.contains("rpm") && root.value("rpm").isObject())
+    {
+        const QJsonObject obj = root.value("rpm").toObject();
+        uint32_t canId = 0;
+        if(parseHex(obj.value("can_id"), canId))
+        {
+            map.rpm.present = true;
+            map.rpm.canId = canId;
+            map.rpm.byteIndex = static_cast<uint8_t>(parseHexOr(obj, "byte", 0));
+            map.rpm.factor = obj.value("factor").toDouble(10.0);
         }
     }
 
@@ -501,7 +515,19 @@ void CanBridge::handleFrame(uint32_t canId, const uint8_t* data, uint8_t dlc)
         if(lastSpeed_ < 0.0 || std::fabs(speed - lastSpeed_) >= 1.0)
         {
             lastSpeed_ = speed;
-            OPENAUTO_LOG(info) << "[CanBridge] speed " << speed << " km/h (GALA stub, not forwarded).";
+            OPENAUTO_LOG(info) << "[CanBridge] speed " << speed << " km/h.";
+            ui::HuEvents::notifySpeed(speed);
+        }
+    }
+
+    if(map_.rpm.present && map_.rpm.canId == canId && map_.rpm.byteIndex < dlc)
+    {
+        const double rpm = data[map_.rpm.byteIndex] * map_.rpm.factor;
+        if(lastRpm_ < 0.0 || std::fabs(rpm - lastRpm_) >= 50.0)
+        {
+            lastRpm_ = rpm;
+            OPENAUTO_LOG(info) << "[CanBridge] rpm " << rpm << " (PLACEHOLDER byte0*factor).";
+            ui::HuEvents::notifyRpm(rpm);
         }
     }
 

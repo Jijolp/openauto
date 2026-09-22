@@ -13,5 +13,6 @@
   "ignition":   {"can_id": "0x260", "byte": 0, "mask": "0x01", "on": "0x01", "off": "0x00"},
   "speed":      {"can_id": "0x261", "byte": 0, "factor": 1.0},
   "night_mode": {"can_id": "0x262", "byte": 0, "mask": "0x04", "on": "0x04"},
-  "temp_ext":   {"can_id": "0x263", "byte": 0, "factor": 1.0, "offset": -40}
+  "temp_ext":   {"can_id": "0x263", "byte": 0, "factor": 1.0, "offset": -40},
+  "rpm":        {"can_id": "0x264", "byte": 0, "factor": 10.0, "_comment": "PLACEHOLDER Race Mode v1: byte0 = rpm/10, calibrate on real W203 capture (see README.md)"}
 }

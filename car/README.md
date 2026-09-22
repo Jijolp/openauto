@@ -24,9 +24,16 @@ Relevant env vars (all optional):
   "ignition":   {"can_id": "0x260", "byte": 0, "mask": "0x01", "on": "0x01", "off": "0x00"},
   "speed":      {"can_id": "0x261", "byte": 0, "factor": 1.0},
   "night_mode": {"can_id": "0x262", "byte": 0, "mask": "0x04", "on": "0x04"},
-  "temp_ext":   {"can_id": "0x263", "byte": 0, "factor": 1.0, "offset": -40}
+  "temp_ext":   {"can_id": "0x263", "byte": 0, "factor": 1.0, "offset": -40},
+  "rpm":        {"can_id": "0x264", "byte": 0, "factor": 10.0}
 }
 ```
+
+> **RPM = PLACEHOLDER Race Mode v1** : formule `rpm = byte0 × factor`
+> (`0x264`, byte 0 = rpm/10, échelle 0–2550 avec factor 10). L'ID, le byte
+> et le facteur sont **factices** — à calibrer sur la capture Quadlock
+> réelle (le compte-tours W203 est probablement multi-octets) SANS toucher
+> le C++ (juste `can_map.json`). Seuil de notification : ≥ 50 tr/min.
 
 - `buttons[]` — `can_id` (hex string or number), `byte` index in the 8-byte
   payload, `mask` applied before compare, `press`/`release` = masked values
@@ -83,6 +90,7 @@ cansend vcan0 266#00    # RELEASE          -> [CanBridge] button seek_next (87) 
 cansend vcan0 260#01    # ignition ON → wake
 cansend vcan0 260#00    # ignition OFF → screen off (overlay noir)
 cansend vcan0 261#32    # speed 50 km/h stub (0x32 = 50)
+cansend vcan0 264#E1    # rpm 2250 (0xE1=225, 225*10, PLACEHOLDER)
 cansend vcan0 262#04    # night ON → theme-night
 cansend vcan0 263#3C    # temp 20°C (0x3C=60, 60-40)
 cansend vcan0 263#28    # temp 0°C  (0x28=40)
@@ -90,6 +98,7 @@ cansend vcan0 263#28    # temp 0°C  (0x28=40)
 # or the full loop:
 sudo pacman -S python-can   # one-time
 python3 car/sim.py --once
+python3 car/sim.py --race --once   # Race telemetry single pass (speed + RPM)
 ```
 
 Expected without phone: parse/info logs for every frame. Button injection

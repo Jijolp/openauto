@@ -38,6 +38,8 @@ public:
     static void notifyNightMode(bool on);
     static void notifyTempExt(int tempC);
     static void notifyIgnition(bool on);
+    static void notifySpeed(double kmh);
+    static void notifyRpm(double rpm);
     static void notifyVideoStarted();
     static void notifyVideoStopped();
 
@@ -77,6 +79,8 @@ signals:
     void nightModeChanged(bool on);
     void tempExtChanged(int tempC);
     void ignitionChanged(bool on);
+    void speedChanged(double kmh);
+    void rpmChanged(double rpm);
     void videoStarted();
     void videoStopped();
 
