@@ -122,6 +122,8 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     , raceTransitionGen_(0)
     , raceTransitionActive_(false)
     , aaSessionActive_(false)
+    , videoStopGen_(0)
+    , navSeq_(0)
     , raceQuadOrigPos_()
     , raceAnims_()
     , embeddedSettings_(embeddedSettings)
@@ -273,6 +275,7 @@ void MainWindow::showHomePage()
     {
         gsim_->stop();
     }
+    ++navSeq_;
     stack_->setCurrentIndex(HOME_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setTitle(QString());
@@ -289,6 +292,7 @@ void MainWindow::showAAPage()
     {
         gsim_->stop();
     }
+    ++navSeq_;
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
     // If video is already playing (session active), hide status bar and show floating button.
@@ -328,6 +332,7 @@ void MainWindow::showSettingsPage()
     {
         embeddedSettings_->show();
     }
+    ++navSeq_;
     stack_->setCurrentIndex(SETTINGS_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setTitle(QStringLiteral("PARAMÈTRES"));
@@ -355,6 +360,7 @@ void MainWindow::showRacePage()
 
 void MainWindow::directShowRace()
 {
+    ++navSeq_;
     stack_->setCurrentIndex(RACE_PAGE);
     HuEvents::setAaPageActive(false);
     // Unified bar (§39): [back logo] MODE RACE left, temp + clock right.
@@ -692,6 +698,7 @@ void MainWindow::showCarPage()
     {
         gsim_->stop();
     }
+    ++navSeq_;
     stack_->setCurrentIndex(CAR_PAGE);
     HuEvents::setAaPageActive(false);
     statusBar_->setTitle(QStringLiteral("VOITURE"));
@@ -757,6 +764,8 @@ void MainWindow::setNightMode(bool on)
 void MainWindow::onVideoStarted()
 {
     aaSessionActive_ = true;
+    // Invalidate any deferred home-switch from a preceding stop (§44).
+    ++videoStopGen_;
     // Auto-switch is preemptive FROM ANY STATE, including mid-transition:
     // cancel the Race choreography instantly, then switch (no fade here).
     this->cancelRaceTransition();
@@ -810,7 +819,25 @@ void MainWindow::onVideoStopped()
     {
         aaPlaceholder_->show();
     }
-    this->showHomePage();
+    // §44: a stop immediately followed by a start (phone handshake at
+    // plug-in) must NOT flash Home. Defer the home-switch 500ms; it is
+    // cancelled by any new start (gen bump above) or any manual
+    // navigation (navSeq bump in every show*). True unplug → home after
+    // 500ms, still on the AA page at fire time.
+    const int gen = ++videoStopGen_;
+    const int nav = navSeq_;
+    OPENAUTO_LOG(info) << "[MainWindow] video stopped, home deferred 500ms.";
+    QTimer::singleShot(500, this, [this, gen, nav]() {
+        if(gen != videoStopGen_ || nav != navSeq_)
+        {
+            return;
+        }
+        if(stack_->currentIndex() != AA_PAGE)
+        {
+            return;
+        }
+        this->showHomePage();
+    });
 }
 
 void MainWindow::onTempExt(int tempC)

@@ -157,6 +157,11 @@ private:
     int raceTransitionGen_;
     bool raceTransitionActive_;
     bool aaSessionActive_;
+    // Stop→start debounce (§44): a video stop immediately followed by a
+    // start (phone handshake) must NOT flash Home. The home-switch is
+    // deferred 500ms and cancelled by any new start or manual navigation.
+    int videoStopGen_;
+    int navSeq_;
     QMap<QWidget*, QPoint> raceQuadOrigPos_;
     // Central logo button geometry before the grow (fixed 180px released
     // for the animation, restored after — see startRaceTransition).

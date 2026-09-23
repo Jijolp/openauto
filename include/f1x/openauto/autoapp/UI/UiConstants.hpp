@@ -20,7 +20,7 @@ struct UiConstants
 {
     // Displayed in Paramètres → "Version logicielle". Bump per release so
     // a human can check the running binary is the latest build.
-    static constexpr const char* APP_VERSION = "0.9.0-race2";
+    static constexpr const char* APP_VERSION = "0.9.0-race4";
 
     // Dev windowed geometry (OPENAUTO_WINDOWED=1), target head-unit 1024x600.
     static constexpr int WINDOWED_WIDTH = 1024;
