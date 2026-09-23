@@ -158,6 +158,16 @@ public:
 protected:
     void paintEvent(QPaintEvent*) override
     {
+        // Reentrancy guard: prevent recursive paintEvent calls during
+        // fade transitions (StackAll + opacity effects on Race page
+        // can cause nested paint events on the same widget).
+        static thread_local bool painting = false;
+        if(painting)
+        {
+            return;
+        }
+        painting = true;
+
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing, true);
         const qreal size = qMin(this->width(), this->height());
@@ -198,6 +208,7 @@ protected:
         p.drawEllipse(dot, 7.0, 7.0);
         p.setBrush(QColor(0xFF, 0xFF, 0xFF));
         p.drawEllipse(dot, 2.5, 2.5);
+        painting = false;
     }
 
 private:
