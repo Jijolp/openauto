@@ -674,55 +674,16 @@ void MainWindow::onStatusBack()
 }
 
 void MainWindow::returnHomeFromRace()
-{    // Return = short 250ms fade of the race page (documented choice: the
-    // full inverse choreography is not worth the fragility — see §36).
-    // AA auto-switch never takes this path: it stays instant.
-    if(returningFromRace_ || raceTransitionActive_ || stack_->currentIndex() != RACE_PAGE)
-    {
-        this->showHomePage();
-        return;
-    }
-    if(qEnvironmentVariableIsSet("OPENAUTO_NO_ANIM"))
-    {
-        this->showHomePage();
-        return;
-    }
-    // Ensure central logo (on home page, underneath) is in clean state
-    // before race page fades out and reveals it. Prevents paint conflicts.
-    if(centerLogo_ != nullptr)
-    {
-        centerLogo_->setRotationAngle(0.0);
-        centerLogo_->setScaleFactor(1.0);
-        centerLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
-        if(auto* eff = qobject_cast<QGraphicsOpacityEffect*>(centerHit_->graphicsEffect()))
-        {
-            eff->setOpacity(1.0);
-        }
-    }
-    returningFromRace_ = true;
-    auto* eff = new QGraphicsOpacityEffect(racePage_);
-    racePage_->setGraphicsEffect(eff);
-    auto* fade = new QPropertyAnimation(eff, "opacity", this);
-    fade->setDuration(UiConstants::RACE_BACK_FADE_MS);
-    fade->setStartValue(1.0);
-    fade->setEndValue(0.0);
-    fade->setEasingCurve(QEasingCurve::OutCubic);
-    connect(fade, &QPropertyAnimation::finished, this, [this, eff, fade]() {
-        fade->deleteLater();
-        racePage_->setGraphicsEffect(nullptr);
-        // Only go home if still on Race and not already returning.
-        if(stack_->currentIndex() == RACE_PAGE && !aaSessionActive_ && returningFromRace_)
-        {
-            returningFromRace_ = false;
-            this->showHomePage();
-        }
-        else
-        {
-            returningFromRace_ = false;
-        }
-        eff->deleteLater();
-    });
-    fade->start();
+{
+    // Round 6 (§43): DIRECT switch, no fade. The 250ms opacity fade on
+    // the whole race page crashed systematically on the button path
+    // (QPainter reentrancy under StackAll compositing + UAF: the finished
+    // handler called eff->deleteLater() after setGraphicsEffect(nullptr)
+    // had already deleted the effect), while the direct keyboard path
+    // (showHomePage) never crashed. Exit animation sacrificed for
+    // stability; the signature ENTRY transition is kept.
+    returningFromRace_ = false;
+    this->showHomePage();
 }
 
 void MainWindow::showCarPage()
@@ -824,6 +785,9 @@ void MainWindow::onVideoStarted()
     {
         aaPlaceholder_->hide();
     }
+    // Auto-switch to the AA page (rule since UI-2a, from ANY state).
+    stack_->setCurrentIndex(AA_PAGE);
+    HuEvents::setAaPageActive(true);
     // Video connected: full-height, hide status bar, show floating aaCluster
     // (bottom-right Mercedes logo button over the video).
     statusBar_->hide();
