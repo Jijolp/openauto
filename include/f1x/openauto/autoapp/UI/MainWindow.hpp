@@ -75,6 +75,7 @@ private slots:
     void onVideoStopped();
     void onTempExt(int tempC);
     void onIgnition(bool on);
+    void onPhoneConnected(bool connected);
     void onSplashFinished();
     void onSplashShrinkStarted();
     void onScreenOffWake();
@@ -117,6 +118,8 @@ private:
     // Snap the central logo button back to its 180px medallion state
     // (geometry, fixed sizes, QSS style, opacity, logo color/rotation).
     void restoreCenterButton();
+    // AA waiting placeholder text follows phone presence (§45).
+    void refreshAaPlaceholder();
 
     StatusBar* statusBar_;
     QStackedWidget* stack_;

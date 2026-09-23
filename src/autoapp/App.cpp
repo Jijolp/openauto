@@ -21,6 +21,7 @@
 #include <f1x/aasdk/TCP/TCPEndpoint.hpp>
 #include <f1x/openauto/autoapp/App.hpp>
 #include <f1x/openauto/autoapp/Projection/CanManager.hpp>
+#include <f1x/openauto/autoapp/UI/HuEvents.hpp>
 #include <f1x/openauto/Common/Log.hpp>
 
 namespace f1x
@@ -75,6 +76,8 @@ void App::start(aasdk::tcp::ITCPEndpoint::SocketPointer socket)
             auto tcpEndpoint(std::make_shared<aasdk::tcp::TCPEndpoint>(tcpWrapper_, std::move(socket)));
             androidAutoEntity_ = androidAutoEntityFactory_.create(std::move(tcpEndpoint));
             androidAutoEntity_->start(*this);
+            // Phone presence for the UI (§45, TCP path).
+            ui::HuEvents::setPhoneConnected(true);
 
             // MISSION 1: Register CanManager button handlers for this session
             if(canManager_ && androidAutoEntity_)
@@ -124,6 +127,9 @@ void App::aoapDeviceHandler(aasdk::usb::DeviceHandle deviceHandle)
 {
     OPENAUTO_LOG(info) << "[App] Device connected.";
     hubWaitArmed_ = false;
+    // Phone presence for the UI (§45): a video stop with the phone still
+    // plugged goes to the AA waiting screen, never Home.
+    ui::HuEvents::setPhoneConnected(true);
 
     if(androidAutoEntity_ != nullptr)
     {
@@ -185,6 +191,10 @@ void App::onAndroidAutoQuit()
 {
     boost::asio::dispatch(strand_, [this, self = this->shared_from_this()]() {
         OPENAUTO_LOG(info) << "[App] quit.";
+
+        // Phone gone for the UI (§45): set FIRST so the later
+        // notifyVideoStopped (queued to the GUI thread) reads it.
+        ui::HuEvents::setPhoneConnected(false);
 
         // A pre-session USB error can trigger quit with no entity (§13).
         if(androidAutoEntity_ != nullptr)

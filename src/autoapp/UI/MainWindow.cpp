@@ -217,6 +217,7 @@ MainWindow::MainWindow(QWidget* embeddedSettings, QWidget *parent)
     connect(&HuEvents::instance(), &HuEvents::videoStopped, this, &MainWindow::onVideoStopped);
     connect(&HuEvents::instance(), &HuEvents::nightModeChanged, this, &MainWindow::setNightMode);
     connect(&HuEvents::instance(), &HuEvents::tempExtChanged, this, &MainWindow::onTempExt);
+    connect(&HuEvents::instance(), &HuEvents::phoneConnectedChanged, this, &MainWindow::onPhoneConnected);
     connect(&HuEvents::instance(), &HuEvents::ignitionChanged, this, &MainWindow::onIgnition);
     connect(statusBar_, &StatusBar::backClicked, this, &MainWindow::onStatusBack);
     connect(splash_, &SplashOverlay::shrinkStarted, this, &MainWindow::onSplashShrinkStarted);
@@ -295,6 +296,8 @@ void MainWindow::showAAPage()
     ++navSeq_;
     stack_->setCurrentIndex(AA_PAGE);
     HuEvents::setAaPageActive(true);
+    // Waiting text follows phone presence (§45); video branch below.
+    this->refreshAaPlaceholder();
     // If video is already playing (session active), hide status bar and show floating button.
     // Otherwise show status bar (waiting screen).
     if(aaSessionActive_)
@@ -819,14 +822,14 @@ void MainWindow::onVideoStopped()
     {
         aaPlaceholder_->show();
     }
-    // §44: a stop immediately followed by a start (phone handshake at
-    // plug-in) must NOT flash Home. Defer the home-switch 500ms; it is
+    // §44+§45: a stop immediately followed by a start (phone handshake
+    // at plug-in) must NOT flash Home. Defer the switch 500ms; it is
     // cancelled by any new start (gen bump above) or any manual
-    // navigation (navSeq bump in every show*). True unplug → home after
-    // 500ms, still on the AA page at fire time.
+    // navigation (navSeq bump in every show*). At fire time: phone still
+    // present → AA WAITING screen (never Home); phone gone → Home.
     const int gen = ++videoStopGen_;
     const int nav = navSeq_;
-    OPENAUTO_LOG(info) << "[MainWindow] video stopped, home deferred 500ms.";
+    OPENAUTO_LOG(info) << "[MainWindow] video stopped, switch deferred 500ms.";
     QTimer::singleShot(500, this, [this, gen, nav]() {
         if(gen != videoStopGen_ || nav != navSeq_)
         {
@@ -836,13 +839,47 @@ void MainWindow::onVideoStopped()
         {
             return;
         }
-        this->showHomePage();
+        if(HuEvents::isPhoneConnected())
+        {
+            this->showAAPage();
+        }
+        else
+        {
+            this->showHomePage();
+        }
     });
 }
 
 void MainWindow::onTempExt(int tempC)
 {
     statusBar_->setTemp(tempC);
+}
+
+void MainWindow::onPhoneConnected(bool connected)
+{
+    // Refresh the waiting text live if parked on the AA page with no
+    // video (§45). Never navigates by itself.
+    if(stack_->currentIndex() == AA_PAGE && !aaSessionActive_)
+    {
+        this->refreshAaPlaceholder();
+    }
+    (void)connected;
+}
+
+void MainWindow::refreshAaPlaceholder()
+{
+    if(aaPlaceholder_ == nullptr)
+    {
+        return;
+    }
+    if(HuEvents::isPhoneConnected())
+    {
+        aaPlaceholder_->setText(QStringLiteral("Téléphone détecté\nConnexion à AA…"));
+    }
+    else
+    {
+        aaPlaceholder_->setText(QStringLiteral("Projection AA\nEn attente de connexion…"));
+    }
 }
 
 void MainWindow::onIgnition(bool on)
@@ -1081,7 +1118,7 @@ QWidget* MainWindow::buildAAPage()
     auto* layout = new QVBoxLayout(aaPage_);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
-    aaPlaceholder_ = makeSubtitle(QStringLiteral("Projection AA\nEn attente de vidéo…"));
+    aaPlaceholder_ = makeSubtitle(QStringLiteral("Projection AA\nEn attente de connexion…"));
     aaPlaceholder_->setObjectName(QStringLiteral("pageTitle"));
     layout->addStretch();
     layout->addWidget(aaPlaceholder_);

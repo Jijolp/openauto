@@ -40,6 +40,7 @@ public:
     static void notifyIgnition(bool on);
     static void notifySpeed(double kmh);
     static void notifyRpm(double rpm);
+    static void notifyPhoneConnected(bool connected);
     static void notifyVideoStarted();
     static void notifyVideoStopped();
 
@@ -65,6 +66,13 @@ public:
     static bool isAaOverlayChild(const QObject* obj);
     static QRect aaOverlayGeometry();
 
+    // --- phone presence (written by App on connect/quit, read by UI) ---
+    // Lets the UI tell "phone plugged, connecting" apart from "no phone":
+    // a video stop with the phone still present goes to the AA WAITING
+    // screen, never Home (§45). Atomic; signal queued to the GUI thread.
+    static void setPhoneConnected(bool connected);
+    static bool isPhoneConnected();
+
     // --- navigation state (written by MainWindow, read by InputDevice) ---
     static void setAaPageActive(bool active);
     static bool isAaPageActive();
@@ -81,6 +89,7 @@ signals:
     void ignitionChanged(bool on);
     void speedChanged(double kmh);
     void rpmChanged(double rpm);
+    void phoneConnectedChanged(bool connected);
     void videoStarted();
     void videoStopped();
 
@@ -90,6 +99,7 @@ private:
     static QWidget* videoHost_;
     static QWidget* statusBar_;
     static QWidget* aaOverlay_;
+    static std::atomic<bool> phoneConnected_;
     static std::atomic<bool> aaPageActive_;
     static std::atomic<bool> splashActive_;
     static std::atomic<bool> screenOffActive_;

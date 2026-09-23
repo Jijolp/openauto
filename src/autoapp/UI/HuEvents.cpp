@@ -18,6 +18,7 @@ namespace ui
 QWidget* HuEvents::videoHost_ = nullptr;
 QWidget* HuEvents::statusBar_ = nullptr;
 QWidget* HuEvents::aaOverlay_ = nullptr;
+std::atomic<bool> HuEvents::phoneConnected_{false};
 std::atomic<bool> HuEvents::aaPageActive_{false};
 std::atomic<bool> HuEvents::splashActive_{false};
 std::atomic<bool> HuEvents::screenOffActive_{false};
@@ -56,6 +57,22 @@ void HuEvents::notifySpeed(double kmh)
 void HuEvents::notifyRpm(double rpm)
 {
     emit instance().rpmChanged(rpm);
+}
+
+void HuEvents::notifyPhoneConnected(bool connected)
+{
+    phoneConnected_.store(connected);
+    emit instance().phoneConnectedChanged(connected);
+}
+
+void HuEvents::setPhoneConnected(bool connected)
+{
+    notifyPhoneConnected(connected);
+}
+
+bool HuEvents::isPhoneConnected()
+{
+    return phoneConnected_.load();
 }
 
 void HuEvents::notifyVideoStarted()
