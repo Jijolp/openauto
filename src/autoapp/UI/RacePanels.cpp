@@ -138,6 +138,7 @@ public:
         , lat_(0.0)
         , lon_(0.0)
         , night_(false)
+        , painting_(false)
     {
         this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     }
@@ -161,12 +162,13 @@ protected:
         // Reentrancy guard: prevent recursive paintEvent calls during
         // fade transitions (StackAll + opacity effects on Race page
         // can cause nested paint events on the same widget).
-        static thread_local bool painting = false;
-        if(painting)
+        // Per-instance reentrancy guard: prevent recursive paintEvent calls
+        // during fade transitions (StackAll + opacity effects).
+        if(painting_)
         {
             return;
         }
-        painting = true;
+        painting_ = true;
 
         QPainter p(this);
         p.setRenderHint(QPainter::Antialiasing, true);
@@ -208,13 +210,15 @@ protected:
         p.drawEllipse(dot, 7.0, 7.0);
         p.setBrush(QColor(0xFF, 0xFF, 0xFF));
         p.drawEllipse(dot, 2.5, 2.5);
-        painting = false;
+        painting_ = false;
     }
 
 private:
     double lat_;
     double lon_;
     bool night_;
+    // Per-instance reentrancy guard for paintEvent.
+    mutable bool painting_ = false;
 };
 
 GForcePanel::GForcePanel(QWidget* parent)

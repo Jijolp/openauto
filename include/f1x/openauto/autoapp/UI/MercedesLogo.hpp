@@ -58,6 +58,10 @@ private:
     int baseSize_;
     bool active_;
     std::unique_ptr<QSvgRenderer> renderer_;
+    // Per-instance reentrancy guard for paintEvent (prevents recursive
+    // paint calls during fade transitions with StackAll + opacity effects).
+    // Not thread_local: each MercedesLogo instance needs its own guard.
+    mutable bool painting_ = false;
 };
 
 }
