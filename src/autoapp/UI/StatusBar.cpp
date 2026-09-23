@@ -52,9 +52,10 @@ StatusBar::StatusBar(QWidget* parent)
     backLogo_->setColor(QColor(0xC8, 0xC8, 0xCC));
     backLogo_->move(0, 0);
     // Touch-first (§40): navigate on PRESS, not clicked.
+    // No active state change for status bar logo (unlike central logo):
+    // changing active state triggers repaint which conflicts with
+    // race page fade animation (StackAll + opacity effect).
     connect(backButton_, &QPushButton::pressed, this, &StatusBar::backClicked);
-    connect(backButton_, &QPushButton::pressed, this, [this]() { backLogo_->setActive(true); });
-    connect(backButton_, &QPushButton::released, this, [this]() { backLogo_->setActive(false); });
     backButton_->hide();
 
     titleLabel_->setObjectName(QStringLiteral("statusTitle"));
