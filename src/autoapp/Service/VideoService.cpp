@@ -105,6 +105,11 @@ void VideoService::onAVChannelStopIndication(const aasdk::proto::messages::AVCha
 
 void VideoService::onAVMediaWithTimestampIndication(aasdk::messenger::Timestamp::ValueType timestamp, const aasdk::common::DataConstBuffer& buffer)
 {
+    if(!firstVideoLogged_)
+    {
+        firstVideoLogged_ = true;
+        OPENAUTO_LOG(info) << "[VideoService] first video payload, size: " << buffer.size;
+    }
     videoOutput_->write(timestamp, buffer);
 
     aasdk::proto::messages::AVMediaAckIndication indication;
@@ -120,6 +125,11 @@ void VideoService::onAVMediaWithTimestampIndication(aasdk::messenger::Timestamp:
 
 void VideoService::onAVMediaIndication(const aasdk::common::DataConstBuffer& buffer)
 {
+    if(!firstVideoLogged_)
+    {
+        firstVideoLogged_ = true;
+        OPENAUTO_LOG(info) << "[VideoService] first video payload, size: " << buffer.size;
+    }
     videoOutput_->write(0, buffer);
 
     aasdk::proto::messages::AVMediaAckIndication indication;

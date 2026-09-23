@@ -60,6 +60,10 @@ private:
     aasdk::channel::av::VideoServiceChannel::Pointer channel_;
     projection::IVideoOutput::Pointer videoOutput_;
     int32_t session_;
+    // First-payload witness (§46): logged once per session so a grey
+    // screen can be told apart between "phone sends nothing yet" and
+    // "bytes flow but nothing renders". Runs on the strand (no race).
+    bool firstVideoLogged_ = false;
 };
 
 }
